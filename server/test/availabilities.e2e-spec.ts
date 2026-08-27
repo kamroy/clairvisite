@@ -5,7 +5,6 @@ import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AvailabilitiesModule } from '../src/modules/availabilities/availabilities.module';
 import { AVAILABILITY_REPOSITORY } from '../src/modules/availabilities/domain/availability.repository.port';
-import { Availability } from '../src/modules/availabilities/domain/availability.entity';
 import { TECHNICIAN_REPOSITORY } from '../src/modules/technicians/domain/technician.repository.port';
 import { Technician } from '../src/modules/technicians/domain/technician.entity';
 import { InMemoryAvailabilityRepository } from './fakes/in-memory-availability.repository';

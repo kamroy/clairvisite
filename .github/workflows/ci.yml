@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      # Bloquant sur les failles "high"/"critical" : pas de continue-on-error ici.
+      - run: npm audit --audit-level=high
+      - run: npm run build
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - run: npm ci
+      # Génère le client Prisma (types utilisés par le build et certains adapters) —
+      # ne nécessite pas de base de données accessible, juste le schéma.
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm test
+      # Les tests e2e tournent contre des repositories en mémoire (server/test/fakes),
+      # pas une vraie Postgres : pas de service DB à démarrer ici.
+      - run: npm run test:e2e
+      # Bloquant sur les failles "high"/"critical" : pas de continue-on-error ici.
+      - run: npm audit --audit-level=high
+      - run: npm run build

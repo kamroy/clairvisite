@@ -2,7 +2,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { api } from "../lib/api";
 import { createTestQueryClient } from "../../test/utils";
 import Signup from "./Signup";
 

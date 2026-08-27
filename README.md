@@ -91,10 +91,19 @@ la spec). Le use case `CreateBookingUseCase` traduit l'erreur métier `SlotAlrea
 - Transaction anti double-réservation + envoi d'email asynchrone (Resend) après réservation/annulation
 - Validation des DTOs avec `class-validator`
 - Tests unitaires (use cases) et e2e côté serveur, tests de composants/hooks côté client
+- Lint : ESLint côté serveur (`npm run lint` dans `server/`) et côté client (`npm run lint` dans `client/`)
 - Page d'accueil : recherche par département + spécialité, header avec nom de l'utilisateur connecté
+
+## CI
+
+`.github/workflows/ci.yml` : à chaque PR et push sur `main`, deux jobs indépendants (`client`, `server`)
+font lint → tests → build. Les tests serveur (unitaires + e2e) tournent contre des repositories en
+mémoire (`server/test/fakes/`), donc aucun service PostgreSQL n'est nécessaire dans la pipeline.
 
 ## Reste à faire pour un MVP livrable
 
 - Écran de complément de profil post-connexion Google (téléphone obligatoire, non fourni par Google) —
   la page `/profile` existe déjà mais n'est pas imposée après un premier login Google
-- CI + déploiement (Render/Railway/Fly.io pour le monolithe NestJS, Neon/Supabase pour Postgres)
+- Déploiement (Render/Railway/Fly.io pour le monolithe NestJS, Neon/Supabase pour Postgres) — la CI
+  s'arrête à `build`, il n'y a pas encore de job de déploiement
+- Scan de sécurité des dépendances (`npm audit`) dans la CI, non bloquant pour l'instant
