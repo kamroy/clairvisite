@@ -1,0 +1,12 @@
+{
+  "rootDir": "..",
+  "testRegex": "test/.*\\.e2e-spec\\.ts$",
+  "transform": {
+    "^.+\\.ts$": ["ts-jest", { "tsconfig": "<rootDir>/tsconfig.json" }]
+  },
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleNameMapper": {
+    "^openid-client$": "<rootDir>/test/fakes/openid-client-stub.ts"
+  },
+  "setupFiles": ["<rootDir>/test/setup-env.ts"]
+}

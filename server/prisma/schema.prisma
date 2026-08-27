@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  acheteur
+  technicien
+  admin
+}
+
+enum AuthProvider {
+  google
+  password
+}
+
+enum TechnicianStatus {
+  pending
+  approved
+  rejected
+}
+
+enum BookingStatus {
+  confirmed
+  cancelled
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String?      @map("password_hash")
+  authProvider AuthProvider @default(password) @map("auth_provider")
+  oidcSubject  String?      @map("oidc_subject")
+  role         Role
+  fullName     String       @map("full_name")
+  phone        String?
+  avatarUrl    String?      @map("avatar_url")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  emailVerifiedAt                 DateTime? @map("email_verified_at")
+  emailVerificationTokenHash      String?   @map("email_verification_token_hash")
+  emailVerificationTokenExpiresAt DateTime? @map("email_verification_token_expires_at")
+
+  technician Technician?
+  bookings   Booking[]
+
+  @@unique([authProvider, oidcSubject])
+  @@map("users")
+}
+
+model Technician {
+  id          String           @id @default(uuid())
+  userId      String           @unique @map("user_id")
+  user        User             @relation(fields: [userId], references: [id])
+  phone       String
+  specialties String[]
+  regions     String[]
+  hourlyRate  Decimal?         @map("hourly_rate")
+  status      TechnicianStatus @default(pending)
+  bio         String?
+
+  availabilities Availability[]
+
+  @@map("technicians")
+}
+
+model Availability {
+  id            String     @id @default(uuid())
+  technicianId  String     @map("technician_id")
+  technician    Technician @relation(fields: [technicianId], references: [id])
+  startDatetime DateTime   @map("start_datetime")
+  endDatetime   DateTime   @map("end_datetime")
+  isBooked      Boolean    @default(false) @map("is_booked")
+
+  booking Booking?
+
+  @@map("availabilities")
+}
+
+model Booking {
+  id              String        @id @default(uuid())
+  availabilityId  String        @unique @map("availability_id")
+  availability    Availability  @relation(fields: [availabilityId], references: [id])
+  buyerId         String        @map("buyer_id")
+  buyer           User          @relation(fields: [buyerId], references: [id])
+  buyerPhone      String        @map("buyer_phone")
+  propertyAddress String        @map("property_address")
+  status          BookingStatus @default(confirmed)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("bookings")
+}
+
+model Region {
+  id   String @id @default(uuid())
+  name String @unique
+
+  @@map("regions")
+}

@@ -1,0 +1,73 @@
+# Lancement local : copiez .env.example en .env à la racine, puis `docker compose up`.
+# Pensé pour le développement (hot-reload via bind mount) — pas pour la production.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-clairvisite}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-clairvisite}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    # db push (pas de dossier prisma/migrations dans ce projet) + seed des régions
+    # (idempotents tous les deux) avant de démarrer en mode watch.
+    command: sh -c "npx prisma db push --skip-generate && npx prisma db seed && npm run start:dev"
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-clairvisite}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-your-local-env}
+      API_BASE_URL: http://localhost:3000/api
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: http://localhost:3000/api/auth/google/callback
+      # Vide = l'appli démarre quand même, mais l'envoi d'email (vérification de
+      # compte, confirmation de réservation) échoue silencieusement en arrière-plan.
+      RESEND_API_KEY: ${RESEND_API_KEY:-re_dev_placeholder}
+      # Doit correspondre à l'origine exacte utilisée par le navigateur (vérifiée par
+      # le CORS du serveur) : http://localhost:5173 normalement, ou l'IP WSL2 si vous
+      # passez par elle en solution de contournement (voir CLIENT_URL dans .env).
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/app
+      # Volume nommé dédié : évite d'écraser les node_modules de l'image (compilés
+      # pour Linux/Alpine, ex. bcrypt) par ceux du host via le bind mount du dessus.
+      - server_node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ./client
+    restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: http://server:3000
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - client_node_modules:/app/node_modules
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
+  server_node_modules:
+  client_node_modules:

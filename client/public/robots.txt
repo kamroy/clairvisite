@@ -1,0 +1,12 @@
+# Pages publiques indexables : accueil, recherche, fiches techniciens.
+# Écrans nécessitant une connexion : aucun intérêt à être crawlés.
+User-agent: *
+Allow: /
+Allow: /search
+Allow: /technicians/
+Disallow: /technician/
+Disallow: /bookings
+Disallow: /admin
+
+# TODO une fois le domaine de production choisi :
+# Sitemap: https://votre-domaine.fr/sitemap.xml

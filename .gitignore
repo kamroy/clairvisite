@@ -1,0 +1,23 @@
+# Dépendances
+node_modules/
+
+# Builds
+dist/
+build/
+
+# Secrets — ne jamais committer les vrais fichiers d'env, seuls les .env.example le sont
+.env
+.env.*
+!.env.example
+
+# Tests / couverture
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.DS_Store
