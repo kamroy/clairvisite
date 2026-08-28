@@ -44,10 +44,10 @@ export default function BookingConfirmation() {
       )}
 
       <Link
-        to="/bookings"
+        to="/projects"
         className="block rounded-full border border-line bg-white px-4 py-3 text-sm font-medium text-ink"
       >
-        Voir mes réservations
+        Voir mes projets
       </Link>
     </div>
   );
