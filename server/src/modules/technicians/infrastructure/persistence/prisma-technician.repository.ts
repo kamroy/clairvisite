@@ -4,6 +4,7 @@ import { PageResult, toPageResult } from '../../../../common/pagination';
 import { Technician, TechnicianStatus } from '../../domain/technician.entity';
 import {
   AvailableSlot,
+  TechnicianAdminListCriteria,
   TechnicianDetail,
   TechnicianRepositoryPort,
   TechnicianSearchCriteria,
@@ -21,6 +22,10 @@ function toDomain(row: any): Technician {
     row.hourlyRate ? Number(row.hourlyRate) : null,
     row.status,
     row.bio,
+    row.category,
+    row.companyName,
+    row.siret,
+    row.yearsOfExperience,
   );
 }
 
@@ -62,6 +67,8 @@ export class PrismaTechnicianRepository implements TechnicianRepositoryPort {
       specialties: row.specialties,
       regions: row.regions,
       hourlyRate: row.hourlyRate ? Number(row.hourlyRate) : null,
+      yearsOfExperience: row.yearsOfExperience,
+      category: row.category,
       status: row.status,
       bio: row.bio,
       availableSlots: row.availabilities.map(toSlot),
@@ -79,13 +86,16 @@ export class PrismaTechnicianRepository implements TechnicianRepositoryPort {
         status: 'approved',
         ...(criteria.region && { regions: { has: criteria.region } }),
         ...(criteria.specialty && { specialties: { has: criteria.specialty } }),
+        ...(criteria.category && { category: criteria.category }),
+        ...(criteria.minYearsOfExperience && { yearsOfExperience: { gte: criteria.minYearsOfExperience } }),
         availabilities: { some: availabilityFilter },
       },
       include: {
         user: true,
         _count: { select: { availabilities: { where: availabilityFilter } } },
       },
-      orderBy: { id: 'asc' },
+      // nulls: 'last' : un tarif non renseigné ne doit pas sembler "le moins cher".
+      orderBy: criteria.sortBy === 'price_asc' ? { hourlyRate: { sort: 'asc', nulls: 'last' } } : { id: 'asc' },
       skip: (criteria.page - 1) * criteria.pageSize,
       // pageSize + 1 : détecte hasMore sans requête COUNT séparée (cf. toPageResult).
       take: criteria.pageSize + 1,
@@ -96,7 +106,9 @@ export class PrismaTechnicianRepository implements TechnicianRepositoryPort {
       fullName: row.user.fullName,
       specialties: row.specialties,
       regions: row.regions,
+      category: row.category,
       hourlyRate: row.hourlyRate ? Number(row.hourlyRate) : null,
+      yearsOfExperience: row.yearsOfExperience,
       availableSlotsCount: row._count.availabilities,
     }));
 
@@ -117,12 +129,24 @@ export class PrismaTechnicianRepository implements TechnicianRepositoryPort {
     return toDomain(row);
   }
 
-  async findAll(page: number, pageSize: number): Promise<PageResult<Technician>> {
+  async findAll(criteria: TechnicianAdminListCriteria): Promise<PageResult<Technician>> {
     const rows = await this.prisma.technician.findMany({
+      where: {
+        ...(criteria.status && { status: criteria.status }),
+        ...(criteria.category && { category: criteria.category }),
+        ...(criteria.search && {
+          user: {
+            OR: [
+              { fullName: { contains: criteria.search, mode: 'insensitive' } },
+              { email: { contains: criteria.search, mode: 'insensitive' } },
+            ],
+          },
+        }),
+      },
       orderBy: { id: 'asc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize + 1,
+      skip: (criteria.page - 1) * criteria.pageSize,
+      take: criteria.pageSize + 1,
     });
-    return toPageResult(rows.map(toDomain), page, pageSize);
+    return toPageResult(rows.map(toDomain), criteria.page, criteria.pageSize);
   }
 }

@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { TECHNICIAN_REPOSITORY, TechnicianRepositoryPort } from '../../../technicians/domain/technician.repository.port';
+import {
+  TECHNICIAN_REPOSITORY,
+  TechnicianAdminListCriteria,
+  TechnicianRepositoryPort,
+} from '../../../technicians/domain/technician.repository.port';
 import { USER_REPOSITORY, UserRepositoryPort } from '../../../users/domain/user.repository.port';
 
 @Injectable()
@@ -9,8 +13,8 @@ export class ListTechniciansForAdminUseCase {
     @Inject(USER_REPOSITORY) private readonly users: UserRepositoryPort,
   ) {}
 
-  async execute(page: number, pageSize: number) {
-    const page_ = await this.technicians.findAll(page, pageSize);
+  async execute(criteria: TechnicianAdminListCriteria) {
+    const page_ = await this.technicians.findAll(criteria);
     // Une seule requête groupée plutôt qu'un findById() par technicien (N+1).
     const users = await this.users.findByIds(page_.items.map((t) => t.userId));
     const userById = new Map(users.map((u) => [u.id, u]));
@@ -24,6 +28,7 @@ export class ListTechniciansForAdminUseCase {
           fullName: user?.fullName,
           email: user?.email,
           specialty: t.specialties[0],
+          category: t.category,
           status: t.status,
         };
       }),

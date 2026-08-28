@@ -6,6 +6,7 @@ import { Roles } from '../../../../common/decorators/roles.decorator';
 import { ListTechniciansForAdminUseCase } from '../../application/use-cases/list-technicians-for-admin.use-case';
 import { SetTechnicianStatusUseCase } from '../../application/use-cases/set-technician-status.use-case';
 import { ListAllBookingsForAdminUseCase } from '../../application/use-cases/list-all-bookings-for-admin.use-case';
+import { TechnicianCategory, TechnicianStatus } from '../../../technicians/domain/technician.entity';
 import { SetTechnicianStatusDto } from './admin.dto';
 
 @Controller('admin')
@@ -19,8 +20,19 @@ export class AdminController {
   ) {}
 
   @Get('technicians')
-  technicians(@Query() pagination: PaginationQueryDto) {
-    return this.listTechnicians.execute(pagination.page, pagination.pageSize);
+  technicians(
+    @Query('status') status: TechnicianStatus,
+    @Query('category') category: TechnicianCategory,
+    @Query('search') search: string,
+    @Query() pagination: PaginationQueryDto,
+  ) {
+    return this.listTechnicians.execute({
+      status,
+      category,
+      search,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    });
   }
 
   @Patch('technicians/:id/status')

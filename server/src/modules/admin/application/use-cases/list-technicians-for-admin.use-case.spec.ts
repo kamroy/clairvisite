@@ -31,7 +31,17 @@ describe('ListTechniciansForAdminUseCase', () => {
   it('transmet la pagination et enrichit chaque technicien avec son utilisateur, sans N+1', async () => {
     const technicianPage = {
       items: [
-        { id: 't1', userId: 'u1', phone: '0600000000', specialties: ['electricite'], regions: [], hourlyRate: null, status: 'pending', bio: null },
+        {
+          id: 't1',
+          userId: 'u1',
+          phone: '0600000000',
+          specialties: ['electricite'],
+          regions: [],
+          hourlyRate: null,
+          status: 'pending',
+          bio: null,
+          category: 'technique',
+        },
       ],
       page: 2,
       pageSize: 10,
@@ -43,15 +53,25 @@ describe('ListTechniciansForAdminUseCase', () => {
     });
     const useCase = new ListTechniciansForAdminUseCase(technicians, users);
 
-    const result = await useCase.execute(2, 10);
+    const criteria = { page: 2, pageSize: 10 };
+    const result = await useCase.execute(criteria);
 
-    expect(technicians.findAll).toHaveBeenCalledWith(2, 10);
+    expect(technicians.findAll).toHaveBeenCalledWith(criteria);
     expect(users.findByIds).toHaveBeenCalledWith(['u1']);
     expect(result).toEqual({
       page: 2,
       pageSize: 10,
       hasMore: true,
-      items: [{ id: 't1', fullName: 'Alice', email: 'alice@test.local', specialty: 'electricite', status: 'pending' }],
+      items: [
+        {
+          id: 't1',
+          fullName: 'Alice',
+          email: 'alice@test.local',
+          specialty: 'electricite',
+          category: 'technique',
+          status: 'pending',
+        },
+      ],
     });
   });
 });

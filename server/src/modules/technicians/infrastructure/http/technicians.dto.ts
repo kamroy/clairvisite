@@ -1,5 +1,9 @@
-import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsEnum, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { FRENCH_PHONE_MESSAGE, FRENCH_PHONE_REGEX } from '../../../../common/validators/french-phone';
+import { SIRET_MESSAGE, SIRET_REGEX } from '../../../../common/validators/siret';
+import { TechnicianCategory } from '../../domain/technician.entity';
+
+const TECHNICIAN_CATEGORIES: TechnicianCategory[] = ['technique', 'decoration', 'architecture'];
 
 export class UpsertTechnicianProfileDto {
   @Matches(FRENCH_PHONE_REGEX, { message: FRENCH_PHONE_MESSAGE })
@@ -27,4 +31,23 @@ export class UpsertTechnicianProfileDto {
   @IsString()
   @MaxLength(2000)
   bio?: string;
+
+  @IsOptional()
+  @IsEnum(TECHNICIAN_CATEGORIES)
+  category?: TechnicianCategory;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  companyName?: string;
+
+  @IsOptional()
+  @Matches(SIRET_REGEX, { message: SIRET_MESSAGE })
+  siret?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(80)
+  yearsOfExperience?: number;
 }

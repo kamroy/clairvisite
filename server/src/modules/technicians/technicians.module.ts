@@ -4,6 +4,7 @@ import { UpsertTechnicianProfileUseCase } from './application/use-cases/upsert-t
 import { SearchTechniciansUseCase } from './application/use-cases/search-technicians.use-case';
 import { GetTechnicianUseCase } from './application/use-cases/get-technician.use-case';
 import { GetMyTechnicianProfileUseCase } from './application/use-cases/get-my-technician-profile.use-case';
+import { ListSimilarTechniciansUseCase } from './application/use-cases/list-similar-technicians.use-case';
 import { TECHNICIAN_REPOSITORY } from './domain/technician.repository.port';
 import { PrismaTechnicianRepository } from './infrastructure/persistence/prisma-technician.repository';
 
@@ -14,6 +15,7 @@ import { PrismaTechnicianRepository } from './infrastructure/persistence/prisma-
     SearchTechniciansUseCase,
     GetTechnicianUseCase,
     GetMyTechnicianProfileUseCase,
+    ListSimilarTechniciansUseCase,
     { provide: TECHNICIAN_REPOSITORY, useClass: PrismaTechnicianRepository },
   ],
   exports: [TECHNICIAN_REPOSITORY],

@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { PageResult, toPageResult } from '../../src/common/pagination';
 import { Technician, TechnicianStatus } from '../../src/modules/technicians/domain/technician.entity';
 import {
+  TechnicianAdminListCriteria,
   TechnicianDetail,
   TechnicianRepositoryPort,
   TechnicianSearchCriteria,
@@ -45,7 +46,9 @@ export class InMemoryTechnicianRepository implements TechnicianRepositoryPort {
       phone: technician.phone,
       specialties: technician.specialties,
       regions: technician.regions,
+      category: technician.category,
       hourlyRate: technician.hourlyRate,
+      yearsOfExperience: technician.yearsOfExperience,
       status: technician.status,
       bio: technician.bio,
       availableSlots: slots.map((s) => ({ id: s.id, startDatetime: s.startDatetime, endDatetime: s.endDatetime })),
@@ -62,6 +65,8 @@ export class InMemoryTechnicianRepository implements TechnicianRepositoryPort {
       if (t.status !== 'approved') continue;
       if (criteria.region && !t.regions.includes(criteria.region)) continue;
       if (criteria.specialty && !t.specialties.includes(criteria.specialty)) continue;
+      if (criteria.category && t.category !== criteria.category) continue;
+      if (criteria.minYearsOfExperience && (t.yearsOfExperience ?? 0) < criteria.minYearsOfExperience) continue;
 
       const slots = await this.availabilities.findByTechnicianId(t.id);
       const availableSlots = slots.filter(
@@ -75,8 +80,19 @@ export class InMemoryTechnicianRepository implements TechnicianRepositoryPort {
         fullName: user?.fullName ?? '',
         specialties: t.specialties,
         regions: t.regions,
+        category: t.category,
         hourlyRate: t.hourlyRate,
+        yearsOfExperience: t.yearsOfExperience,
         availableSlotsCount: availableSlots.length,
+      });
+    }
+
+    if (criteria.sortBy === 'price_asc') {
+      // nulls en dernier, comme côté Prisma (voir prisma-technician.repository.ts).
+      results.sort((a, b) => {
+        if (a.hourlyRate == null) return b.hourlyRate == null ? 0 : 1;
+        if (b.hourlyRate == null) return -1;
+        return a.hourlyRate - b.hourlyRate;
       });
     }
 
@@ -96,6 +112,10 @@ export class InMemoryTechnicianRepository implements TechnicianRepositoryPort {
       data.hourlyRate ?? null,
       existing?.status ?? 'pending',
       data.bio ?? null,
+      data.category ?? existing?.category ?? 'technique',
+      data.companyName ?? existing?.companyName ?? null,
+      data.siret ?? existing?.siret ?? null,
+      data.yearsOfExperience ?? existing?.yearsOfExperience ?? null,
     );
     this.technicians.set(technician.id, technician);
     return technician;
@@ -113,15 +133,32 @@ export class InMemoryTechnicianRepository implements TechnicianRepositoryPort {
       existing.hourlyRate,
       status,
       existing.bio,
+      existing.category,
+      existing.companyName,
+      existing.siret,
+      existing.yearsOfExperience,
     );
     this.technicians.set(id, updated);
     return updated;
   }
 
-  async findAll(page: number, pageSize: number): Promise<PageResult<Technician>> {
-    const all = [...this.technicians.values()].sort((a, b) => a.id.localeCompare(b.id));
-    const start = (page - 1) * pageSize;
-    return toPageResult(all.slice(start, start + pageSize + 1), page, pageSize);
+  async findAll(criteria: TechnicianAdminListCriteria): Promise<PageResult<Technician>> {
+    const search = criteria.search?.toLowerCase();
+    const filtered: Technician[] = [];
+    for (const t of [...this.technicians.values()].sort((a, b) => a.id.localeCompare(b.id))) {
+      if (criteria.status && t.status !== criteria.status) continue;
+      if (criteria.category && t.category !== criteria.category) continue;
+      if (search) {
+        const user = await this.users.findById(t.userId);
+        const matches =
+          user?.fullName.toLowerCase().includes(search) || user?.email.toLowerCase().includes(search);
+        if (!matches) continue;
+      }
+      filtered.push(t);
+    }
+
+    const start = (criteria.page - 1) * criteria.pageSize;
+    return toPageResult(filtered.slice(start, start + criteria.pageSize + 1), criteria.page, criteria.pageSize);
   }
 
   seed(technician: Technician): Technician {

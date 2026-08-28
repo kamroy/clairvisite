@@ -8,7 +8,9 @@ import { UpsertTechnicianProfileUseCase } from '../../application/use-cases/upse
 import { SearchTechniciansUseCase } from '../../application/use-cases/search-technicians.use-case';
 import { GetTechnicianUseCase } from '../../application/use-cases/get-technician.use-case';
 import { GetMyTechnicianProfileUseCase } from '../../application/use-cases/get-my-technician-profile.use-case';
-import { TechnicianDetail } from '../../domain/technician.repository.port';
+import { ListSimilarTechniciansUseCase } from '../../application/use-cases/list-similar-technicians.use-case';
+import { TechnicianDetail, TechnicianSortBy } from '../../domain/technician.repository.port';
+import { TechnicianCategory } from '../../domain/technician.entity';
 import { UpsertTechnicianProfileDto } from './technicians.dto';
 
 // Vue publique (non authentifiée) d'un technicien : le téléphone n'est communiqué
@@ -24,6 +26,7 @@ export class TechniciansController {
     private readonly searchTechnicians: SearchTechniciansUseCase,
     private readonly getTechnician: GetTechnicianUseCase,
     private readonly getMyProfile: GetMyTechnicianProfileUseCase,
+    private readonly listSimilar: ListSimilarTechniciansUseCase,
   ) {}
 
   @Post('profile')
@@ -53,13 +56,19 @@ export class TechniciansController {
   async search(
     @Query('region') region?: string,
     @Query('specialty') specialty?: string,
+    @Query('category') category?: TechnicianCategory,
     @Query('date') date?: string,
+    @Query('experience') experience?: string,
+    @Query('sort') sort?: TechnicianSortBy,
     @Query() pagination?: PaginationQueryDto,
   ) {
     return this.searchTechnicians.execute({
       region,
       specialty,
+      category,
       availableFrom: date ? new Date(date) : undefined,
+      minYearsOfExperience: experience ? Number(experience) : undefined,
+      sortBy: sort,
       page: pagination?.page ?? 1,
       pageSize: pagination?.pageSize ?? 12,
     });
@@ -69,5 +78,10 @@ export class TechniciansController {
   async getById(@Param('id') id: string) {
     const technician = await this.getTechnician.execute(id);
     return toPublicTechnician(technician);
+  }
+
+  @Get(':id/similar')
+  listSimilarProfiles(@Param('id') id: string) {
+    return this.listSimilar.execute(id);
   }
 }
