@@ -5,6 +5,7 @@ import {
   SlotAlreadyBookedError,
   TechnicianNotAvailableError,
 } from '../../domain/booking.repository.port';
+import { PropertyType } from '../../domain/booking.entity';
 import { BOOKING_EMAIL_NOTIFIER, BookingEmailNotifierPort } from '../ports/booking-email-notifier.port';
 
 export interface CreateBookingInput {
@@ -12,6 +13,8 @@ export interface CreateBookingInput {
   buyerId: string;
   buyerPhone: string;
   propertyAddress: string;
+  propertyType?: PropertyType;
+  surfaceM2?: number;
 }
 
 @Injectable()
@@ -33,6 +36,8 @@ export class CreateBookingUseCase {
         buyerId: input.buyerId,
         buyerPhone: input.buyerPhone,
         propertyAddress: input.propertyAddress,
+        propertyType: input.propertyType,
+        surfaceM2: input.surfaceM2,
       });
     } catch (err) {
       if (err instanceof SlotAlreadyBookedError || err instanceof TechnicianNotAvailableError) {

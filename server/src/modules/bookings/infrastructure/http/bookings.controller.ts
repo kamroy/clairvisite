@@ -28,6 +28,8 @@ export class BookingsController {
       buyerId: user.sub,
       buyerPhone: dto.buyer_phone,
       propertyAddress: dto.property_address,
+      propertyType: dto.property_type,
+      surfaceM2: dto.surface_m2,
     });
   }
 

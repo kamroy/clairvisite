@@ -1,5 +1,5 @@
 import { PageResult } from '../../../common/pagination';
-import { Booking, BookingStatus } from './booking.entity';
+import { Booking, BookingStatus, PropertyType } from './booking.entity';
 
 export const BOOKING_REPOSITORY = Symbol('BOOKING_REPOSITORY');
 
@@ -8,6 +8,8 @@ export interface CreateBookingData {
   buyerId: string;
   buyerPhone: string;
   propertyAddress: string;
+  propertyType?: PropertyType;
+  surfaceM2?: number;
 }
 
 // Vue enrichie utilisée pour l'email de confirmation et les écrans de détail —

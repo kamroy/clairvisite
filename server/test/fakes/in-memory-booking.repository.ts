@@ -91,7 +91,17 @@ export class InMemoryBookingRepository implements BookingRepositoryPort {
     if (!existing) throw new Error(`InMemoryBookingRepository: booking ${id} not found`);
     this.bookings.set(
       id,
-      new Booking(existing.id, existing.availabilityId, existing.buyerId, existing.buyerPhone, existing.propertyAddress, status, existing.createdAt),
+      new Booking(
+        existing.id,
+        existing.availabilityId,
+        existing.buyerId,
+        existing.buyerPhone,
+        existing.propertyAddress,
+        status,
+        existing.createdAt,
+        existing.propertyType,
+        existing.surfaceM2,
+      ),
     );
     if (status === 'confirmed') this.availabilities.tryReserve(existing.availabilityId);
     else this.availabilities.release(existing.availabilityId);
@@ -110,7 +120,17 @@ export class InMemoryBookingRepository implements BookingRepositoryPort {
     const reserved = this.availabilities.tryReserve(data.availabilityId);
     if (!reserved) throw new SlotAlreadyBookedError();
 
-    const booking = new Booking(randomUUID(), data.availabilityId, data.buyerId, data.buyerPhone, data.propertyAddress, 'confirmed', new Date());
+    const booking = new Booking(
+      randomUUID(),
+      data.availabilityId,
+      data.buyerId,
+      data.buyerPhone,
+      data.propertyAddress,
+      'confirmed',
+      new Date(),
+      data.propertyType ?? null,
+      data.surfaceM2 ?? null,
+    );
     this.bookings.set(booking.id, booking);
     return this.hydrate(booking);
   }

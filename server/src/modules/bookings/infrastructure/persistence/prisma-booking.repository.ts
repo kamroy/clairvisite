@@ -19,6 +19,8 @@ function toDomain(row: any): Booking {
     row.propertyAddress,
     row.status,
     row.createdAt,
+    row.propertyType,
+    row.surfaceM2,
   );
 }
 
@@ -119,6 +121,8 @@ export class PrismaBookingRepository implements BookingRepositoryPort {
           buyerId: data.buyerId,
           buyerPhone: data.buyerPhone,
           propertyAddress: data.propertyAddress,
+          propertyType: data.propertyType,
+          surfaceM2: data.surfaceM2,
         },
         include: detailsInclude,
       });
