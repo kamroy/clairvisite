@@ -2,8 +2,7 @@ import { Controller, Get, Req, Res } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import type { Request, Response } from 'express';
 import { CSRF_COOKIE_NAME } from './csrf.constants';
-
-const isProd = process.env.NODE_ENV === 'production';
+import { crossOriginCookieOptions } from '../cookies/cookie-options';
 
 // Point d'entrée appelé par le client au démarrage (et à la volée si le cookie a expiré)
 // pour obtenir le jeton du pattern double-submit cookie consommé par CsrfGuard.
@@ -16,8 +15,7 @@ export class CsrfController {
       token = randomUUID();
       res.cookie(CSRF_COOKIE_NAME, token, {
         httpOnly: false, // doit rester lisible en JS pour être renvoyé dans l'en-tête X-CSRF-Token
-        secure: isProd,
-        sameSite: 'lax',
+        ...crossOriginCookieOptions(),
       });
     }
     return { csrfToken: token };

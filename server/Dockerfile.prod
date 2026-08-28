@@ -1,0 +1,37 @@
+# Image de production (Render/Railway/Fly.io) — build multi-stage, sans devDependencies
+# dans l'image finale, utilisateur non-root. Contrairement à Dockerfile (dev local,
+# hot-reload via bind mount), celle-ci embarque son propre code compilé.
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+RUN apk add --no-cache openssl
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+FROM node:20-alpine
+WORKDIR /app
+# openssl : requis par le moteur de requêtes Prisma sur Alpine (musl libc).
+RUN apk add --no-cache openssl
+RUN addgroup -S app && adduser -S app -G app
+
+COPY --chown=app:app package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY --chown=app:app --from=builder /app/dist ./dist
+COPY --chown=app:app --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --chown=app:app --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --chown=app:app prisma/schema.prisma ./prisma/schema.prisma
+
+USER app
+EXPOSE 3000
+
+# `prisma db push` : synchronise le schéma au démarrage (ce projet n'a pas de dossier
+# prisma/migrations, cf. le commentaire dans seed.ts — même logique qu'en dev). Le seed
+# (départements + compte admin) n'est volontairement PAS lancé ici : les
+# devDependencies (ts-node) ne sont pas dans cette image, et un mot de passe admin par
+# défaut ne doit jamais tourner tel quel sur une base accessible depuis internet — voir
+# le README pour le lancer une fois, manuellement, avec un mot de passe fort.
+CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/main"]

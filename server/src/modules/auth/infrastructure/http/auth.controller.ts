@@ -13,8 +13,7 @@ import { VerifyEmailUseCase } from '../../application/verify-email.use-case';
 import { ResendVerificationEmailUseCase } from '../../application/resend-verification-email.use-case';
 import { RegisterDto, LoginDto, ResendVerificationDto } from './auth.dto';
 import { Inject } from '@nestjs/common';
-
-const isProd = process.env.NODE_ENV === 'production';
+import { isProd, crossOriginCookieOptions } from '../../../../common/cookies/cookie-options';
 
 @Controller('auth')
 export class AuthController {
@@ -36,8 +35,7 @@ export class AuthController {
   private setSessionCookie(res: Response, token: string) {
     res.cookie('session', token, {
       httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
+      ...crossOriginCookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
@@ -83,7 +81,9 @@ export class AuthController {
   @Post('logout')
   @HttpCode(204)
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('session');
+    // clearCookie doit recevoir les mêmes attributs qu'à la pose (path/secure/sameSite),
+    // sinon le navigateur ne reconnaît pas le cookie à effacer et le laisse en place.
+    res.clearCookie('session', crossOriginCookieOptions());
   }
 
   @Get('google')
@@ -91,7 +91,14 @@ export class AuthController {
     const redirectUri = this.config.getOrThrow('GOOGLE_REDIRECT_URI');
     const { authorizationUrl, codeVerifier } = await this.startOidcLogin.execute(redirectUri);
 
-    res.cookie('oidc_verifier', codeVerifier, { httpOnly: true, sameSite: 'lax', maxAge: 5 * 60 * 1000 });
+    // Cookie posé/lu uniquement lors de navigations top-level (redirection OAuth), pas
+    // d'un fetch() cross-site : `sameSite: 'lax'` suffit même en déploiement cross-origin.
+    res.cookie('oidc_verifier', codeVerifier, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      maxAge: 5 * 60 * 1000,
+    });
     res.redirect(authorizationUrl);
   }
 
@@ -107,7 +114,7 @@ export class AuthController {
         req.cookies.oidc_verifier,
       );
       this.setSessionCookie(res, sessionToken);
-      res.clearCookie('oidc_verifier');
+      res.clearCookie('oidc_verifier', { sameSite: 'lax', secure: isProd });
       res.redirect(clientUrl); // page d'accueil publique (recherche), pas d'écran dédié nécessaire ici
     } catch (err) {
       if (err instanceof OidcAccountConflictError) {
