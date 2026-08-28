@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom";
 import { initials } from "../lib/format";
 
+const CATEGORY_LABELS = {
+  technique: "Contre-visite Technique",
+  decoration: "Décoration d'intérieur",
+  architecture: "Architecture & Rénovation",
+};
+
 export default function TechnicianCard({ technician }) {
-  const { id, fullName, specialties = [], regions = [], hourlyRate, availableSlotsCount } = technician;
+  const { id, fullName, specialties = [], regions = [], category, yearsOfExperience, hourlyRate, availableSlotsCount } =
+    technician;
 
   return (
     <div className="flex flex-col gap-3.5 rounded-card border border-line bg-white p-4.5 shadow-card">
@@ -19,6 +26,7 @@ export default function TechnicianCard({ technician }) {
           </div>
           <div className="text-xs text-muted">
             {specialties[0]} · {regions[0]}
+            {yearsOfExperience != null && ` · ${yearsOfExperience} ans d'expérience`}
           </div>
         </div>
         {hourlyRate != null && (
@@ -28,6 +36,12 @@ export default function TechnicianCard({ technician }) {
           </div>
         )}
       </div>
+
+      {category && (
+        <span className="w-fit rounded-field bg-ink/5 px-2.5 py-1 text-[11px] font-medium text-ink">
+          {CATEGORY_LABELS[category] ?? category}
+        </span>
+      )}
 
       {specialties.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
@@ -48,7 +62,7 @@ export default function TechnicianCard({ technician }) {
         </div>
         <Link
           to={`/technicians/${id}`}
-          className="rounded-full bg-ink px-4 py-2 text-xs font-medium text-white hover:bg-ink/90"
+          className="rounded-field bg-ink px-4 py-2 text-xs font-medium text-white hover:bg-ink/90"
         >
           Voir le profil
         </Link>

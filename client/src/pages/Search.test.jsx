@@ -72,6 +72,9 @@ describe("Search — recherche et scroll infini", () => {
       region: "",
       date: "",
       specialty: "",
+      category: "",
+      experience: "",
+      sort: "",
       page: 1,
       pageSize: 12,
     });
@@ -97,6 +100,9 @@ describe("Search — recherche et scroll infini", () => {
       region: "",
       date: "",
       specialty: "",
+      category: "",
+      experience: "",
+      sort: "",
       page: 2,
       pageSize: 12,
     });

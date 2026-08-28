@@ -1,4 +1,7 @@
-const BASE_URL = "/api";
+// En dev, "/api" passe par le proxy Vite (voir vite.config.js) vers le serveur local.
+// En prod, front et back sont déployés séparément (pas de proxy) : VITE_API_URL doit
+// pointer vers l'URL publique complète de l'API (ex. https://api.clairvisite.fr/api).
+const BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
 
 function readCookie(name) {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -61,9 +64,36 @@ export const api = {
 
   searchTechnicians: (params) => request(`/technicians?${toQueryString(params)}`),
   getTechnician: (id) => request(`/technicians/${id}`),
+  getSimilarTechnicians: (id) => request(`/technicians/${id}/similar`),
   getMyTechnicianProfile: () => request("/technicians/profile"),
   updateMyProfile: (data) =>
     request("/technicians/profile", { method: "PATCH", body: JSON.stringify(data) }),
+
+  technicianPricingItems: (id) => request(`/technicians/${id}/pricing-items`),
+  addTechnicianPricingItem: (label, price) =>
+    request("/technicians/me/pricing-items", { method: "POST", body: JSON.stringify({ label, price }) }),
+  removeTechnicianPricingItem: (itemId) =>
+    request(`/technicians/me/pricing-items/${itemId}`, { method: "DELETE" }),
+
+  technicianPortfolio: (id) => request(`/technicians/${id}/portfolio`),
+  requestTechnicianPortfolioUploadUrl: (fileName, contentType) =>
+    request("/technicians/me/portfolio/upload-url", {
+      method: "POST",
+      body: JSON.stringify({ fileName, contentType }),
+    }),
+  attachTechnicianPortfolioItem: (key, caption) =>
+    request("/technicians/me/portfolio", { method: "POST", body: JSON.stringify({ key, caption }) }),
+  removeTechnicianPortfolioItem: (itemId) =>
+    request(`/technicians/me/portfolio/${itemId}`, { method: "DELETE" }),
+
+  myTechnicianDocuments: () => request("/technicians/me/documents"),
+  requestTechnicianDocumentUploadUrl: (fileName, contentType) =>
+    request("/technicians/me/documents/upload-url", {
+      method: "POST",
+      body: JSON.stringify({ fileName, contentType }),
+    }),
+  attachTechnicianDocument: (key, fileName) =>
+    request("/technicians/me/documents", { method: "POST", body: JSON.stringify({ key, fileName }) }),
 
   myAvailabilities: () => request("/technicians/me/availabilities"),
   createAvailability: (data) =>

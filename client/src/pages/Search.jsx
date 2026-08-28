@@ -181,10 +181,31 @@ const STEPS = [
   "Recevez son avis avant de vous engager",
 ];
 
+const PROFILE_CATEGORIES = [
+  { value: "", label: "Tous les profils" },
+  { value: "technique", label: "Contre-visite Technique" },
+  { value: "decoration", label: "Décoration d'intérieur" },
+  { value: "architecture", label: "Architecture & Rénovation" },
+];
+
+const EXPERIENCE_OPTIONS = [
+  { value: "", label: "Toute expérience" },
+  { value: "10", label: "Plus de 10 ans" },
+  { value: "5", label: "5 à 10 ans" },
+];
+
+const SORT_OPTIONS = [
+  { value: "", label: "Pertinence" },
+  { value: "price_asc", label: "Tarif croissant" },
+];
+
 export default function Search() {
   const [region, setRegion] = useState("");
   const [date, setDate] = useState("");
   const [specialty, setSpecialty] = useState("");
+  const [category, setCategory] = useState("");
+  const [experience, setExperience] = useState("");
+  const [sort, setSort] = useState("");
   const [searchParams, setSearchParams] = useState(null);
   const resultsRef = useRef(null);
 
@@ -196,15 +217,30 @@ export default function Search() {
     resultsRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
+  function currentParams(overrides = {}) {
+    return { region, date, specialty, category, experience, sort, ...overrides };
+  }
+
   function handleSearch(e) {
     e.preventDefault();
-    runSearch({ region, date, specialty });
+    runSearch(currentParams());
   }
 
   function handleCategoryClick(key) {
     const next = specialty === key ? "" : key;
     setSpecialty(next);
-    runSearch({ region, date, specialty: next });
+    runSearch(currentParams({ specialty: next }));
+  }
+
+  // Les filtres secondaires relancent la recherche immédiatement (pas besoin de
+  // re-cliquer "Rechercher") — seuls région/date restent liés au bouton du hero,
+  // car ils font partie du même petit formulaire visuel.
+  function handleFilterChange(setter, field) {
+    return (e) => {
+      const value = e.target.value;
+      setter(value);
+      if (searchParams !== null) runSearch(currentParams({ [field]: value }));
+    };
   }
 
   const technicians = flattenPages(searchQuery.data);
@@ -314,6 +350,30 @@ export default function Search() {
                 <span aria-hidden="true">×</span>
               </button>
             )}
+          </div>
+
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Field
+              as="select"
+              label="Profil"
+              value={category}
+              onChange={handleFilterChange(setCategory, "category")}
+              options={PROFILE_CATEGORIES}
+            />
+            <Field
+              as="select"
+              label="Expérience"
+              value={experience}
+              onChange={handleFilterChange(setExperience, "experience")}
+              options={EXPERIENCE_OPTIONS}
+            />
+            <Field
+              as="select"
+              label="Trier par"
+              value={sort}
+              onChange={handleFilterChange(setSort, "sort")}
+              options={SORT_OPTIONS}
+            />
           </div>
 
           {searchQuery.isError && (

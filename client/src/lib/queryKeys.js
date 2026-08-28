@@ -5,7 +5,11 @@ export const queryKeys = {
     all: ["technicians"],
     search: (params) => ["technicians", "search", params],
     detail: (id) => ["technicians", "detail", id],
+    similar: (id) => ["technicians", "similar", id],
+    pricingItems: (id) => ["technicians", "pricingItems", id],
+    portfolio: (id) => ["technicians", "portfolio", id],
     myProfile: ["technicians", "myProfile"],
+    myDocuments: ["technicians", "myDocuments"],
   },
   availabilities: {
     mine: ["availabilities", "mine"],
@@ -15,6 +19,6 @@ export const queryKeys = {
     technician: ["bookings", "technician"],
   },
   admin: {
-    technicians: ["admin", "technicians"],
+    technicians: (params) => ["admin", "technicians", params],
   },
 };
