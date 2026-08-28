@@ -39,15 +39,14 @@ données** et doivent être tranchés avant la Phase 1 :
   (à la couche infra, pas dans le code applicatif).
 - Langue admin : toujours en attente d'arbitrage — n'a pas bloqué la Phase 0.
 
-## Phase 1 — Combler l'écart sur le parcours existant (Must have) ⚠️ Presque terminée (2026-08-28)
+## Phase 1 — Combler l'écart sur le parcours existant (Must have) ✅ Terminée (2026-08-29)
 Le socle acheteur ↔ technicien ↔ admin existe déjà en version simple ; cette phase l'amène au niveau du
 prototype avant d'ajouter de nouvelles briques.
 - ✅ US-AUTH-01 (choix de profil acheteur/pro à l'inscription)
-- ⚠️ US-AUTH-02 (connexion) — **non traitée comme tranche dédiée**. Le login email/mdp et le callback OIDC
-  Google fonctionnaient déjà avant cette phase et ont juste été réutilisés (ex. redirection post-connexion
-  vers `/projects` ou `/technician/dashboard`). **Restent manquants** : le bouton "afficher le mot de passe"
-  et tout le flux "mot de passe oublié" (aucun code de réinitialisation n'existe côté serveur ou client) —
-  c'était déjà signalé comme point ouvert dans [01-auth-et-comptes.md](01-auth-et-comptes.md#us-auth-02).
+- ✅ US-AUTH-02 (connexion + mot de passe oublié) — login email/mdp et callback OIDC Google réutilisés tels
+  quels (redirection post-connexion vers `/projects` ou `/technician/dashboard`) ; ajout du bouton
+  afficher/masquer le mot de passe et du flux complet de réinitialisation (jeton haché sha256, TTL 1h, email
+  via Resend, anti-enumeration), vérifié en réel contre Postgres et via un vrai parcours navigateur.
 - ✅ US-AUTH-04 (dossier pro multi-étapes avec SIRET/documents)
 - ✅ US-AUTH-06 (validation admin, filtres catégorie/statut/recherche)
 - ✅ US-SEARCH-01, 02 (filtres recherche enrichis, profil public avec grille tarifaire/portfolio/profils
@@ -59,11 +58,13 @@ prototype avant d'ajouter de nouvelles briques.
   faute de module de facturation)
 
 *Aucune dépendance externe nouvelle — s'appuie sur `auth`, `bookings`, `technicians`, `availabilities`
-existants. Tests : 22 suites/84 tests unitaires + 7 suites/57 tests e2e serveur, 15 suites/94 tests client,
-tous au vert à la fin de la phase.*
+existants. Tests à la fin de la phase : 24 suites/90 tests unitaires + 7 suites/63 tests e2e serveur, 17
+suites/104 tests client, tous au vert.*
 
-⚠️ **Aucun commit git** n'a encore été fait pour tout le travail de Phase 0 et Phase 1 (dernier commit :
-`b881713 add spec for the product`) — 94 fichiers modifiés/créés en attente dans l'arbre de travail.
+Tout le travail de Phase 0 et Phase 1 est maintenant committé sur `main` (voir l'historique git), après
+avoir initialement été laissé non committé pendant plusieurs tranches — la découpe par commit a dû être
+reconstruite a posteriori pour la majeure partie, avec quelques fichiers partagés entre plusieurs user
+stories regroupés dans un seul commit (voir les messages de commit pour le détail).
 
 ## Phase 2 — Boucler la transaction (Must have, cœur de la valeur produit)
 - US-PAY-01 (paiement) — *dépend du PSP (Phase 0)*
