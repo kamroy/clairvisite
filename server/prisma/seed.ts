@@ -4,7 +4,13 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.ADMIN_SEED_EMAIL ?? 'admin@clairvisite.fr';
-const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD ?? 'ChangeMoi123!';
+const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD;
+
+if (!ADMIN_PASSWORD) {
+  throw new Error(
+    'ADMIN_SEED_PASSWORD est requis pour lancer le seed (voir .env.example).',
+  );
+}
 
 // Les 101 départements français (96 métropolitains + 5 d'outre-mer), au
 // format "code - nom" utilisé pour le tri et l'affichage.
