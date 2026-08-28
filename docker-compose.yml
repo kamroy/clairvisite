@@ -19,6 +19,20 @@ services:
       timeout: 3s
       retries: 10
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_ACCESS_KEY:-minioadmin123}
+    ports:
+      # 9000/9001 déjà pris par un autre projet sur cette machine -> remappés en 90{10,11}.
+      - "9010:9000" # API S3 (http://localhost:9010)
+      - "9011:9001" # Console web (http://localhost:9011)
+    volumes:
+      - minio_data:/data
+
   server:
     build:
       context: ./server
@@ -41,6 +55,17 @@ services:
       # passez par elle en solution de contournement (voir CLIENT_URL dans .env).
       CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
       PORT: 3000
+      # Requis par prisma/seed.ts depuis qu'il n'a plus de mot de passe par défaut
+      # codé en dur (voir la doc du seed) — ce défaut-ci est un défaut de dev local
+      # explicite dans l'infra, pas un secret caché dans le code applicatif.
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@clairvisite.fr}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-ChangeMoi123!}
+      # MinIO en local (S3-compatible) — voir src/infrastructure/storage/.
+      STORAGE_ENDPOINT: http://minio:9000
+      STORAGE_REGION: us-east-1
+      STORAGE_BUCKET: clairvisite-files
+      STORAGE_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY_ID:-minioadmin}
+      STORAGE_SECRET_ACCESS_KEY: ${STORAGE_SECRET_ACCESS_KEY:-minioadmin123}
     ports:
       - "3000:3000"
     volumes:
@@ -51,6 +76,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      minio:
+        condition: service_started
 
   client:
     build:
@@ -69,5 +96,6 @@ services:
 
 volumes:
   pgdata:
+  minio_data:
   server_node_modules:
   client_node_modules:

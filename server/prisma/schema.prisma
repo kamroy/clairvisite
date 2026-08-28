@@ -24,9 +24,25 @@ enum TechnicianStatus {
   rejected
 }
 
+// Catégorie métier principale, utilisée pour le filtre de recherche par profil
+// (Contre-visite Technique / Décoration d'intérieur / Architecture & Rénovation).
+// Distincte de `specialties` (tags libres, plus fins) sur le modèle Technician.
+enum TechnicianCategory {
+  technique
+  decoration
+  architecture
+}
+
 enum BookingStatus {
   confirmed
   cancelled
+}
+
+// Type de bien concerné par la contre-visite — collecté à l'étape 1 du tunnel de
+// réservation (voir docs/specs/03-reservation-et-projets.md, US-BOOK-01).
+enum PropertyType {
+  apartment
+  house
 }
 
 model User {
@@ -62,10 +78,60 @@ model Technician {
   hourlyRate  Decimal?         @map("hourly_rate")
   status      TechnicianStatus @default(pending)
   bio         String?
+  category    TechnicianCategory @default(technique)
+  companyName String?          @map("company_name")
+  siret       String?
+  yearsOfExperience Int?       @map("years_of_experience")
 
   availabilities Availability[]
+  documents      TechnicianDocument[]
+  pricingItems   TechnicianPricingItem[]
+  portfolioItems TechnicianPortfolioItem[]
 
   @@map("technicians")
+}
+
+// Pièces justificatives déposées pendant l'inscription pro (assurance RC pro, pièce
+// d'identité, diplômes...) — le fichier lui-même vit dans le stockage objet (voir
+// src/infrastructure/storage/), cette table ne garde que la référence.
+model TechnicianDocument {
+  id           String     @id @default(uuid())
+  technicianId String     @map("technician_id")
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  key          String
+  fileName     String     @map("file_name")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@map("technician_documents")
+}
+
+// Grille tarifaire publique par prestation (ex. "Conseil Décor Complète — 250€"),
+// distincte du `hourlyRate` indicatif — affichée sur le profil public.
+model TechnicianPricingItem {
+  id           String     @id @default(uuid())
+  technicianId String     @map("technician_id")
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  label        String
+  price        Decimal
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@map("technician_pricing_items")
+}
+
+// Galerie de réalisations affichée sur le profil public — le fichier vit dans le
+// stockage objet, cette table ne garde que la référence (même principe que
+// TechnicianDocument, mais visible publiquement plutôt que réservé à l'admin).
+model TechnicianPortfolioItem {
+  id           String     @id @default(uuid())
+  technicianId String     @map("technician_id")
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  key          String
+  caption      String?
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@map("technician_portfolio_items")
 }
 
 model Availability {
@@ -89,6 +155,8 @@ model Booking {
   buyer           User          @relation(fields: [buyerId], references: [id])
   buyerPhone      String        @map("buyer_phone")
   propertyAddress String        @map("property_address")
+  propertyType    PropertyType? @map("property_type")
+  surfaceM2       Int?          @map("surface_m2")
   status          BookingStatus @default(confirmed)
   createdAt       DateTime      @default(now()) @map("created_at")
 
