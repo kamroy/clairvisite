@@ -1,12 +1,15 @@
 import { Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
+import ChooseProfile from "./pages/ChooseProfile";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import Search from "./pages/Search";
 import TechnicianProfile from "./pages/TechnicianProfile";
+import BookingTunnel from "./pages/BookingTunnel";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import TechnicianDashboard from "./pages/TechnicianDashboard";
 import BuyerBookings from "./pages/BuyerBookings";
+import MyProjects from "./pages/MyProjects";
 import Admin from "./pages/Admin";
 
 export default function App() {
@@ -14,11 +17,15 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Search />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      <Route path="/signup" element={<ChooseProfile />} />
+      <Route path="/signup/acheteur" element={<Signup role="acheteur" />} />
+      <Route path="/signup/pro" element={<Signup role="technicien" />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/search" element={<Search />} />
       <Route path="/technicians/:id" element={<TechnicianProfile />} />
+      <Route path="/technicians/:id/book" element={<BookingTunnel />} />
       <Route path="/bookings/:id/confirmation" element={<BookingConfirmation />} />
+      <Route path="/projects" element={<MyProjects />} />
       <Route path="/bookings" element={<BuyerBookings />} />
       <Route path="/technician/*" element={<TechnicianDashboard />} />
       <Route path="/admin" element={<Admin />} />
