@@ -15,12 +15,11 @@ import {
   isValidPassword,
 } from "../lib/validation";
 
-export default function Signup() {
+export default function Signup({ role }) {
   const register = useRegister();
   const resendVerification = useResendVerification();
   const { onBlurField, isTouched } = useTouched();
-  const initialRole = new URLSearchParams(window.location.search).get("role") === "technicien" ? "technicien" : "acheteur";
-  const [form, setForm] = useState({ fullName: "", email: "", phone: "", password: "", role: initialRole });
+  const [form, setForm] = useState({ fullName: "", email: "", phone: "", password: "" });
   const [registeredEmail, setRegisteredEmail] = useState(null);
 
   function update(field) {
@@ -30,7 +29,7 @@ export default function Signup() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      await register.mutateAsync({ ...form, phone: form.phone || undefined });
+      await register.mutateAsync({ ...form, role, phone: form.phone || undefined });
       // Le compte n'est pas encore actif : il faut cliquer le lien reçu par email
       // avant de pouvoir se connecter (voir server/.../verify-email.use-case.ts).
       setRegisteredEmail(form.email);
@@ -42,11 +41,17 @@ export default function Signup() {
   if (registeredEmail) {
     return (
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4 py-10 text-center">
-        <div className="text-lg font-bold">Clairvisite</div>
+        <div className="font-serif text-lg font-semibold">Luxe & Structure</div>
         <p className="text-sm text-ink/70">
           Un email de confirmation a été envoyé à <strong>{registeredEmail}</strong>. Cliquez sur le lien qu'il
           contient pour activer votre compte.
         </p>
+        {role === "technicien" && (
+          <p className="text-sm text-ink/70">
+            Une fois connecté, complétez votre profil professionnel (spécialités, SIRET, documents) pour
+            soumettre votre candidature à validation.
+          </p>
+        )}
 
         <Button
           variant="ghost"
@@ -71,8 +76,12 @@ export default function Signup() {
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4 py-10">
       <div className="mb-2 text-center">
-        <div className="text-lg font-bold">Clairvisite</div>
-        <p className="mt-2 text-sm text-ink/70">Créez votre compte avec un email et un mot de passe</p>
+        <div className="font-serif text-lg font-semibold">Luxe & Structure</div>
+        <p className="mt-2 text-sm text-ink/70">
+          {role === "technicien"
+            ? "Soumettez votre candidature professionnelle"
+            : "Créez votre compte avec un email et un mot de passe"}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -120,17 +129,6 @@ export default function Signup() {
           invalid={isTouched("password") && form.password !== "" && !isValidPassword(form.password)}
         />
         <p className="-mt-2 text-xs text-muted">{PASSWORD_TITLE}</p>
-        <Field
-          as="select"
-          label="Je suis…"
-          name="role"
-          value={form.role}
-          onChange={update("role")}
-          options={[
-            { value: "acheteur", label: "Acheteur — je recherche un technicien pour une contre-visite" },
-            { value: "technicien", label: "Technicien — je propose mes services" },
-          ]}
-        />
 
         {register.isError && <p className="text-sm text-red-600">{register.error.message}</p>}
 

@@ -47,7 +47,7 @@ describe("useSetTechnicianStatus", () => {
     });
 
     expect(api.adminSetTechnicianStatus).toHaveBeenCalledWith("t1", "approved");
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.admin.technicians }));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["admin", "technicians"] }));
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.technicians.all });
   });
 });
