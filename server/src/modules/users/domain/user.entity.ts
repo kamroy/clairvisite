@@ -14,5 +14,6 @@ export class User {
     public readonly phone: string | null = null,
     public readonly emailVerifiedAt: Date | null = null,
     public readonly emailVerificationTokenExpiresAt: Date | null = null,
+    public readonly passwordResetTokenExpiresAt: Date | null = null,
   ) {}
 }

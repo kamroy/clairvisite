@@ -26,6 +26,11 @@ export interface SetEmailVerificationTokenData {
   expiresAt: Date;
 }
 
+export interface SetPasswordResetTokenData {
+  tokenHash: string;
+  expiresAt: Date;
+}
+
 // Port piloté (driven port) : implémenté par un adapter d'infrastructure (Prisma ici).
 export interface UserRepositoryPort {
   findById(id: string): Promise<User | null>;
@@ -38,4 +43,8 @@ export interface UserRepositoryPort {
   setEmailVerificationToken(userId: string, data: SetEmailVerificationTokenData): Promise<void>;
   findByEmailVerificationTokenHash(tokenHash: string): Promise<User | null>;
   markEmailVerified(userId: string): Promise<User>;
+
+  setPasswordResetToken(userId: string, data: SetPasswordResetTokenData): Promise<void>;
+  findByPasswordResetTokenHash(tokenHash: string): Promise<User | null>;
+  resetPassword(userId: string, passwordHash: string): Promise<void>;
 }

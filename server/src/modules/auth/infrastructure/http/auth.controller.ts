@@ -11,7 +11,10 @@ import { StartOidcLoginUseCase } from '../../application/start-oidc-login.use-ca
 import { HandleOidcCallbackUseCase, OidcAccountConflictError } from '../../application/handle-oidc-callback.use-case';
 import { VerifyEmailUseCase } from '../../application/verify-email.use-case';
 import { ResendVerificationEmailUseCase } from '../../application/resend-verification-email.use-case';
-import { RegisterDto, LoginDto, ResendVerificationDto } from './auth.dto';
+import { RequestPasswordResetUseCase } from '../../application/request-password-reset.use-case';
+import { ResetPasswordUseCase, InvalidOrExpiredResetTokenError } from '../../application/reset-password.use-case';
+import { RegisterDto, LoginDto, ResendVerificationDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
+import { BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { isProd, crossOriginCookieOptions } from '../../../../common/cookies/cookie-options';
 
@@ -25,11 +28,20 @@ export class AuthController {
     private readonly handleOidcCallback: HandleOidcCallbackUseCase,
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
     private readonly resendVerificationEmail: ResendVerificationEmailUseCase,
+    private readonly requestPasswordReset: RequestPasswordResetUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
     @Inject(USER_REPOSITORY) private readonly users: UserRepositoryPort,
   ) {}
 
   private verifyEmailBaseUrl(): string {
     return `${this.config.getOrThrow('API_BASE_URL')}/auth/verify-email`;
+  }
+
+  // Contrairement à verify-email (géré côté serveur par une redirection), la
+  // réinitialisation affiche un formulaire (nouveau mot de passe) : le lien pointe donc
+  // vers une page du client, pas vers l'API.
+  private resetPasswordBaseUrl(): string {
+    return `${this.config.getOrThrow('CLIENT_URL')}/reset-password`;
   }
 
   private setSessionCookie(res: Response, token: string) {
@@ -67,6 +79,27 @@ export class AuthController {
   async resendVerification(@Body() dto: ResendVerificationDto) {
     await this.resendVerificationEmail.execute(dto.email, this.verifyEmailBaseUrl());
     return { message: 'Si un compte existe avec cet email, un lien de confirmation a été renvoyé.' };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.requestPasswordReset.execute(dto.email, this.resetPasswordBaseUrl());
+    return { message: 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.' };
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    try {
+      await this.resetPasswordUseCase.execute(dto.token, dto.password);
+    } catch (err) {
+      if (err instanceof InvalidOrExpiredResetTokenError) throw new BadRequestException(err.message);
+      throw err;
+    }
+    return { message: 'Mot de passe mis à jour.' };
   }
 
   @Post('login')

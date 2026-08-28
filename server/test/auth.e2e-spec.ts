@@ -6,10 +6,12 @@ import { AuthModule } from '../src/modules/auth/auth.module';
 import { USER_REPOSITORY } from '../src/modules/users/domain/user.repository.port';
 import { OIDC_PROVIDER } from '../src/modules/auth/application/oidc-provider.port';
 import { EMAIL_VERIFICATION_NOTIFIER } from '../src/modules/auth/application/ports/email-verification-notifier.port';
+import { PASSWORD_RESET_NOTIFIER } from '../src/modules/auth/application/ports/password-reset-notifier.port';
 import { EMAIL_NOT_VERIFIED_MESSAGE } from '../src/modules/auth/application/login.use-case';
 import { InMemoryUserRepository } from './fakes/in-memory-user.repository';
 import { FakeOidcProvider } from './fakes/fake-oidc-provider';
 import { FakeEmailVerificationNotifier } from './fakes/fake-email-verification-notifier';
+import { FakePasswordResetNotifier } from './fakes/fake-password-reset-notifier';
 import { finalizeTestApp } from './utils/finalize-test-app';
 
 function hasSessionCookie(res: { headers: Record<string, unknown> }): boolean {
@@ -23,11 +25,13 @@ describe('Auth (e2e)', () => {
   let users: InMemoryUserRepository;
   let oidc: FakeOidcProvider;
   let emailNotifier: FakeEmailVerificationNotifier;
+  let resetNotifier: FakePasswordResetNotifier;
 
   beforeEach(async () => {
     users = new InMemoryUserRepository();
     oidc = new FakeOidcProvider();
     emailNotifier = new FakeEmailVerificationNotifier();
+    resetNotifier = new FakePasswordResetNotifier();
 
     const moduleRef = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule],
@@ -38,6 +42,8 @@ describe('Auth (e2e)', () => {
       .useValue(oidc)
       .overrideProvider(EMAIL_VERIFICATION_NOTIFIER)
       .useValue(emailNotifier)
+      .overrideProvider(PASSWORD_RESET_NOTIFIER)
+      .useValue(resetNotifier)
       .compile();
 
     app = await finalizeTestApp(moduleRef);
@@ -197,5 +203,73 @@ describe('Auth (e2e)', () => {
     expect(hasSessionCookie(res)).toBe(true);
     const created = await users.findByEmail('newgoogleuser@example.com');
     expect(created?.emailVerifiedAt).not.toBeNull();
+  });
+
+  it('forgot-password renvoie toujours le même message, que le compte existe ou non (anti-enumeration)', async () => {
+    await registerAndVerify('forgot@example.com', 'P@ssword123!', 'Forgot Me');
+
+    const existing = await request(app.getHttpServer())
+      .post('/api/auth/forgot-password')
+      .send({ email: 'forgot@example.com' })
+      .expect(200);
+    const unknown = await request(app.getHttpServer())
+      .post('/api/auth/forgot-password')
+      .send({ email: 'does-not-exist@example.com' })
+      .expect(200);
+
+    expect(existing.body).toEqual(unknown.body);
+    expect(resetNotifier.lastResetUrl).toContain('/reset-password?token=');
+  });
+
+  it('le flux complet de réinitialisation change le mot de passe et invalide le jeton après usage', async () => {
+    await registerAndVerify('reset-flow@example.com', 'OldP@ssword123!', 'Reset Flow');
+
+    await request(app.getHttpServer())
+      .post('/api/auth/forgot-password')
+      .send({ email: 'reset-flow@example.com' })
+      .expect(200);
+    const token = resetNotifier.extractToken();
+
+    await request(app.getHttpServer())
+      .post('/api/auth/reset-password')
+      .send({ token, password: 'NewP@ssword456!' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'reset-flow@example.com', password: 'OldP@ssword123!' })
+      .expect(401);
+    await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'reset-flow@example.com', password: 'NewP@ssword456!' })
+      .expect(200);
+
+    // Le jeton ne doit pas être réutilisable une fois consommé.
+    await request(app.getHttpServer())
+      .post('/api/auth/reset-password')
+      .send({ token, password: 'AnotherP@ss789!' })
+      .expect(400);
+  });
+
+  it('reset-password refuse un jeton invalide ou expiré (400)', async () => {
+    await request(app.getHttpServer())
+      .post('/api/auth/reset-password')
+      .send({ token: 'does-not-exist', password: 'NewP@ssword456!' })
+      .expect(400);
+  });
+
+  it.each([
+    ['trop court (11 caractères)', 'Sh0rt!'],
+    ['sans majuscule', 'p@ssword123!'],
+    ['sans caractère spécial', 'Password1234'],
+  ])('reset-password refuse un mot de passe %s', async (_label, password) => {
+    await registerAndVerify('weak-reset@example.com', 'P@ssword123!', 'Weak Reset');
+    await request(app.getHttpServer())
+      .post('/api/auth/forgot-password')
+      .send({ email: 'weak-reset@example.com' })
+      .expect(200);
+    const token = resetNotifier.extractToken();
+
+    await request(app.getHttpServer()).post('/api/auth/reset-password').send({ token, password }).expect(400);
   });
 });

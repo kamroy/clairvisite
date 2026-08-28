@@ -44,3 +44,20 @@ export class ResendVerificationDto {
   @IsEmail()
   email: string;
 }
+
+export class ForgotPasswordDto {
+  @IsEmail()
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @IsString()
+  token: string;
+
+  @IsString()
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  @Matches(PASSWORD_UPPERCASE_REGEX, { message: PASSWORD_UPPERCASE_MESSAGE })
+  @Matches(PASSWORD_SPECIAL_CHAR_REGEX, { message: PASSWORD_SPECIAL_CHAR_MESSAGE })
+  password: string;
+}

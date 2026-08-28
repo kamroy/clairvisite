@@ -4,6 +4,7 @@ import { AuthProvider, User } from '../domain/user.entity';
 import {
   CreateUserData,
   SetEmailVerificationTokenData,
+  SetPasswordResetTokenData,
   UpdateUserProfileData,
   UserRepositoryPort,
 } from '../domain/user.repository.port';
@@ -21,6 +22,7 @@ function toDomain(row: any): User {
     row.phone,
     row.emailVerifiedAt,
     row.emailVerificationTokenExpiresAt,
+    row.passwordResetTokenExpiresAt,
   );
 }
 
@@ -83,5 +85,24 @@ export class PrismaUserRepository implements UserRepositoryPort {
       },
     });
     return toDomain(row);
+  }
+
+  async setPasswordResetToken(userId: string, data: SetPasswordResetTokenData): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordResetTokenHash: data.tokenHash, passwordResetTokenExpiresAt: data.expiresAt },
+    });
+  }
+
+  async findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
+    const row = await this.prisma.user.findFirst({ where: { passwordResetTokenHash: tokenHash } });
+    return row ? toDomain(row) : null;
+  }
+
+  async resetPassword(userId: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash, passwordResetTokenHash: null, passwordResetTokenExpiresAt: null },
+    });
   }
 }

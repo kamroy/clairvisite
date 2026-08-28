@@ -3,6 +3,7 @@ import { User } from '../../src/modules/users/domain/user.entity';
 import {
   CreateUserData,
   SetEmailVerificationTokenData,
+  SetPasswordResetTokenData,
   UpdateUserProfileData,
   UserRepositoryPort,
 } from '../../src/modules/users/domain/user.repository.port';
@@ -13,6 +14,7 @@ import {
 export class InMemoryUserRepository implements UserRepositoryPort {
   private readonly users = new Map<string, User>();
   private readonly verificationTokenHashes = new Map<string, string>(); // userId -> tokenHash
+  private readonly passwordResetTokenHashes = new Map<string, string>(); // userId -> tokenHash
 
   async findById(id: string): Promise<User | null> {
     return this.users.get(id) ?? null;
@@ -45,6 +47,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       null,
       data.emailVerifiedAt ?? null,
       null,
+      null,
     );
     this.users.set(user.id, user);
     return user;
@@ -65,6 +68,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       data.phone ?? existing.phone,
       existing.emailVerifiedAt,
       existing.emailVerificationTokenExpiresAt,
+      existing.passwordResetTokenExpiresAt,
     );
     this.users.set(id, updated);
     return updated;
@@ -88,6 +92,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
         existing.phone,
         existing.emailVerifiedAt,
         data.expiresAt,
+        existing.passwordResetTokenExpiresAt,
       ),
     );
   }
@@ -115,9 +120,63 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       existing.phone,
       new Date(),
       null,
+      existing.passwordResetTokenExpiresAt,
     );
     this.users.set(userId, updated);
     return updated;
+  }
+
+  async setPasswordResetToken(userId: string, data: SetPasswordResetTokenData): Promise<void> {
+    const existing = this.users.get(userId);
+    if (!existing) throw new Error(`InMemoryUserRepository: user ${userId} not found`);
+    this.passwordResetTokenHashes.set(userId, data.tokenHash);
+    this.users.set(
+      userId,
+      new User(
+        existing.id,
+        existing.email,
+        existing.fullName,
+        existing.role,
+        existing.authProvider,
+        existing.passwordHash,
+        existing.oidcSubject,
+        existing.avatarUrl,
+        existing.phone,
+        existing.emailVerifiedAt,
+        existing.emailVerificationTokenExpiresAt,
+        data.expiresAt,
+      ),
+    );
+  }
+
+  async findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
+    for (const [userId, hash] of this.passwordResetTokenHashes) {
+      if (hash === tokenHash) return this.users.get(userId) ?? null;
+    }
+    return null;
+  }
+
+  async resetPassword(userId: string, passwordHash: string): Promise<void> {
+    const existing = this.users.get(userId);
+    if (!existing) throw new Error(`InMemoryUserRepository: user ${userId} not found`);
+    this.passwordResetTokenHashes.delete(userId);
+    this.users.set(
+      userId,
+      new User(
+        existing.id,
+        existing.email,
+        existing.fullName,
+        existing.role,
+        existing.authProvider,
+        passwordHash,
+        existing.oidcSubject,
+        existing.avatarUrl,
+        existing.phone,
+        existing.emailVerifiedAt,
+        existing.emailVerificationTokenExpiresAt,
+        null,
+      ),
+    );
   }
 
   seed(user: User): User {
