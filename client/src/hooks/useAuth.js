@@ -30,6 +30,14 @@ export function useResendVerification() {
   return useMutation({ mutationFn: (email) => api.resendVerification(email) });
 }
 
+export function useForgotPassword() {
+  return useMutation({ mutationFn: (email) => api.forgotPassword(email) });
+}
+
+export function useResetPassword() {
+  return useMutation({ mutationFn: ({ token, password }) => api.resetPassword(token, password) });
+}
+
 export function useUpdateMyAccount() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "../components/Button";
 import Field from "../components/Field";
@@ -26,6 +26,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -100,12 +101,25 @@ export default function Login() {
         />
         <Field
           label="Mot de passe"
-          type="password"
+          type={showPassword ? "text" : "password"}
           name="password"
           required
           value={form.password}
           onChange={update("password")}
+          endSlot={
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPassword((s) => !s)}
+              className="text-xs font-medium text-muted hover:text-ink"
+            >
+              {showPassword ? "Masquer" : "Afficher"}
+            </button>
+          }
         />
+        <Link to="/forgot-password" className="-mt-2 self-end text-xs font-medium text-muted underline">
+          Mot de passe oublié ?
+        </Link>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

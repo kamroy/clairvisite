@@ -3,7 +3,15 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { api } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { createTestQueryClient, wrapperWithClient } from "../../test/utils";
-import { useMe, useLogin, useRegister, useResendVerification, useUpdateMyAccount } from "./useAuth";
+import {
+  useMe,
+  useLogin,
+  useRegister,
+  useResendVerification,
+  useForgotPassword,
+  useResetPassword,
+  useUpdateMyAccount,
+} from "./useAuth";
 
 vi.mock("../lib/api", () => ({
   api: {
@@ -11,6 +19,8 @@ vi.mock("../lib/api", () => ({
     login: vi.fn(),
     register: vi.fn(),
     resendVerification: vi.fn(),
+    forgotPassword: vi.fn(),
+    resetPassword: vi.fn(),
     updateMyAccount: vi.fn(),
   },
 }));
@@ -105,6 +115,43 @@ describe("useResendVerification", () => {
     });
 
     expect(api.resendVerification).toHaveBeenCalledWith("alice@test.local");
+  });
+});
+
+describe("useForgotPassword", () => {
+  it("transmet l'email à l'API", async () => {
+    api.forgotPassword.mockResolvedValue({ message: "ok" });
+    const { result } = renderHook(() => useForgotPassword(), { wrapper: wrapperWithClient() });
+
+    await act(async () => {
+      await result.current.mutateAsync("alice@test.local");
+    });
+
+    expect(api.forgotPassword).toHaveBeenCalledWith("alice@test.local");
+  });
+});
+
+describe("useResetPassword", () => {
+  it("transmet le jeton et le nouveau mot de passe à l'API", async () => {
+    api.resetPassword.mockResolvedValue({ message: "ok" });
+    const { result } = renderHook(() => useResetPassword(), { wrapper: wrapperWithClient() });
+
+    await act(async () => {
+      await result.current.mutateAsync({ token: "raw-token", password: "NewP@ssword123!" });
+    });
+
+    expect(api.resetPassword).toHaveBeenCalledWith("raw-token", "NewP@ssword123!");
+  });
+
+  it("propage l'erreur pour un jeton invalide ou expiré", async () => {
+    api.resetPassword.mockRejectedValue(new Error("Lien de réinitialisation invalide ou expiré"));
+    const { result } = renderHook(() => useResetPassword(), { wrapper: wrapperWithClient() });
+
+    await expect(
+      act(async () => {
+        await result.current.mutateAsync({ token: "bad-token", password: "NewP@ssword123!" });
+      }),
+    ).rejects.toThrow("Lien de réinitialisation invalide ou expiré");
   });
 });
 

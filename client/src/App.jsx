@@ -1,5 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ChooseProfile from "./pages/ChooseProfile";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
@@ -17,6 +19,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Search />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/signup" element={<ChooseProfile />} />
       <Route path="/signup/acheteur" element={<Signup role="acheteur" />} />
       <Route path="/signup/pro" element={<Signup role="technicien" />} />
