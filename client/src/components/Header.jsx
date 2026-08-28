@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMe, useLogout } from "../hooks/useAuth";
 import { initials } from "../lib/format";
 
-const HOME_BY_ROLE = { acheteur: "/search", technicien: "/technician/availabilities", admin: "/admin" };
+const HOME_BY_ROLE = { acheteur: "/projects", technicien: "/technician/dashboard", admin: "/admin" };
 
 export default function Header() {
   const navigate = useNavigate();
@@ -17,8 +17,8 @@ export default function Header() {
 
   return (
     <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5">
-      <Link to={user ? (HOME_BY_ROLE[user.role] ?? "/search") : "/"} className="text-lg font-bold text-ink">
-        Clairvisite
+      <Link to={user ? (HOME_BY_ROLE[user.role] ?? "/search") : "/"} className="font-serif text-lg font-semibold text-ink">
+        Luxe & Structure
       </Link>
 
       <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export default function Header() {
             </Link>
             <Link
               to="/signup"
-              className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-ink/90"
+              className="rounded-field bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-ink/90"
             >
               Créer un compte
             </Link>

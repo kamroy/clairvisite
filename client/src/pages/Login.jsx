@@ -9,7 +9,7 @@ import { useLogin, useResendVerification } from "../hooks/useAuth";
 import { useTouched } from "../hooks/useTouched";
 import { isValidEmail } from "../lib/validation";
 
-const HOME_BY_ROLE = { acheteur: "/search", technicien: "/technician/availabilities", admin: "/admin" };
+const HOME_BY_ROLE = { acheteur: "/projects", technicien: "/technician/dashboard", admin: "/admin" };
 
 const ERROR_MESSAGES = {
   verification: "Ce lien de confirmation est invalide ou a expiré.",
@@ -33,7 +33,7 @@ export default function Login() {
     if (params.get("verified") === "1") {
       queryClient
         .fetchQuery({ queryKey: queryKeys.me, queryFn: api.me })
-        .then((me) => navigate(HOME_BY_ROLE[me?.role] ?? "/search"));
+        .then((me) => navigate(HOME_BY_ROLE[me?.role] ?? "/projects"));
       return;
     }
 
@@ -51,7 +51,7 @@ export default function Login() {
     setUnverifiedEmail(null);
     try {
       const me = await login.mutateAsync(form);
-      navigate(HOME_BY_ROLE[me?.role] ?? "/search");
+      navigate(HOME_BY_ROLE[me?.role] ?? "/projects");
     } catch (err) {
       if (err.message === "EMAIL_NOT_VERIFIED") {
         setUnverifiedEmail(form.email);
@@ -64,7 +64,7 @@ export default function Login() {
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4 py-10">
       <div className="mb-2 text-center">
-        <div className="text-lg font-bold">Clairvisite</div>
+        <div className="font-serif text-lg font-semibold">Luxe & Structure</div>
         <p className="mt-2 text-sm text-ink/70">
           Connectez-vous pour réserver ou gérer votre agenda
         </p>
