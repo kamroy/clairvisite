@@ -66,13 +66,20 @@ avoir initialement été laissé non committé pendant plusieurs tranches — la
 reconstruite a posteriori pour la majeure partie, avec quelques fichiers partagés entre plusieurs user
 stories regroupés dans un seul commit (voir les messages de commit pour le détail).
 
-## Phase 2 — Boucler la transaction (Must have, cœur de la valeur produit)
-- US-PAY-01 (paiement) — *dépend du PSP (Phase 0)*
-- US-REPORT-01, 02 (rédaction + consultation du rapport technique) — *dépend du stockage fichiers (Phase 0)*
-- US-COMM-01 (messagerie liée au projet) — *dépend du canal temps réel (Phase 0)*
+## Phase 2 — Boucler la transaction (Must have, cœur de la valeur produit) ⚠️ Partielle (2026-08-29)
+- ⏸️ US-PAY-01 (paiement) — **explicitement reporté**, sur demande (2026-08-29) : le paiement n'est pas
+  traité dans cette tranche. Stripe reste le PSP retenu (Phase 0) le jour où il sera repris. *Dépend du
+  PSP (Phase 0)*.
+- ✅ US-REPORT-01, 02 (rédaction + consultation du rapport technique) — *dépendait du stockage fichiers
+  (Phase 0)*, voir [05-rapport-technique.md](05-rapport-technique.md).
+- ✅ US-COMM-01 (messagerie liée au projet) — implémentée avec du **polling plutôt que le canal temps réel
+  WebSocket** initialement pressenti en Phase 0 (la spec autorisait explicitement les deux options) : pas
+  de brique transverse WebSocket construite, voir [06-communication.md](06-communication.md). US-COMM-02
+  (centre de notifications), qui devait aussi consommer cette brique, en tiendra compte le moment venu.
 
-À l'issue de cette phase, le parcours "contre-visite technique" est complet de bout en bout : recherche →
-réservation → paiement → rapport → échange avec l'expert.
+Le parcours "contre-visite technique" est donc complet de bout en bout *hors paiement* : recherche →
+réservation → rapport → échange avec l'expert. Le paiement reste la pièce manquante pour boucler
+entièrement la transaction.
 
 ## Phase 3 — Confiance & conformité (Should have)
 - US-PAY-02 (signature électronique du devis) — *réutilise le stockage fichiers*
@@ -106,7 +113,7 @@ Peut être livré en continu après la Phase 3, sans bloquer le reste :
 ```
 Phase 0  Fondations             (stockage fichiers, PSP, décisions modèle de données)
 Phase 1  Écart existant         AUTH-01/02/04/06, SEARCH-01/02, BOOK-01/04, DASH-01
-Phase 2  Boucler la transaction PAY-01, REPORT-01/02, COMM-01
+Phase 2  Boucler la transaction PAY-01 (reporté), REPORT-01/02 ✅, COMM-01 ✅
 Phase 3  Confiance & conformité PAY-02, COMM-02, DOC-01, ADMIN-01/06/07/08
 Phase 4  Vertical déco          SEARCH-03, BOOK-02 (BOOK-03 ✅ fait)  (conditionné, parallèle possible dès Phase 1)
 Phase 5  Pilotage & confort     DASH-02, ADMIN-02/03/04/05/09, COMM-03
