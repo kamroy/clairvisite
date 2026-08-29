@@ -64,12 +64,55 @@ model User {
   passwordResetTokenHash      String?   @map("password_reset_token_hash")
   passwordResetTokenExpiresAt DateTime? @map("password_reset_token_expires_at")
 
-  technician Technician?
-  bookings   Booking[]
-  messages   Message[]
+  // Pertinent uniquement pour role = admin (US-ADMIN-01) : rôle RBAC fin, distinct du
+  // champ `role` grossier qui ne fait que distinguer acheteur/technicien/admin. Un
+  // admin sans adminRoleId (comptes créés avant cette fonctionnalité) est traité comme
+  // Super Admin par la couche application, pour ne rien casser rétroactivement.
+  adminRoleId String?    @map("admin_role_id")
+  adminRole   AdminRole? @relation(fields: [adminRoleId], references: [id])
+
+  technician    Technician?
+  bookings      Booking[]
+  messages      Message[]
+  notifications Notification[]
 
   @@unique([authProvider, oidcSubject])
   @@map("users")
+}
+
+// Rôle RBAC pour les comptes admin (US-ADMIN-01) : un ensemble nommé de permissions
+// activables individuellement, assignable à plusieurs utilisateurs. `isSystem` protège
+// le rôle "Super Admin" auto-créé (voir ListAdminRolesUseCase) contre le renommage, la
+// suppression ou une modification de permissions qui pourrait verrouiller tout accès
+// admin par erreur.
+model AdminRole {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  permissions String[]
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@map("admin_roles")
+}
+
+// Journal d'audit des actions de gestion des rôles/permissions admin (US-ADMIN-01) —
+// périmètre volontairement restreint aux actions RBAC elles-mêmes (création/édition/
+// clonage/suppression de rôle, assignation d'un admin) : les autres actions admin déjà
+// existantes (validation technicien, etc.) ne sont pas encore journalisées ici.
+model AdminAuditLogEntry {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  actorName  String   @map("actor_name")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("admin_audit_log_entries")
 }
 
 model Technician {
@@ -292,4 +335,34 @@ model Region {
   name String @unique
 
   @@map("regions")
+}
+
+// Catégories du centre de notifications (US-COMM-02), reprises telles quelles du
+// prototype Stitch. "devis_finances" et "compte_profil" n'ont pour l'instant aucun
+// producteur (pas de module paiement/document) : la taxonomie existe déjà côté filtre,
+// prête à être alimentée quand ces modules existeront.
+enum NotificationCategory {
+  visite_technique
+  decoration
+  devis_finances
+  compte_profil
+}
+
+// Notification in-app générée par d'autres modules (booking/report/messaging) via le
+// port NOTIFICATION_PUBLISHER — table de lecture simple, pas de canal temps réel
+// (même choix polling que la messagerie, voir 06-communication.md).
+model Notification {
+  id        String               @id @default(uuid())
+  userId    String               @map("user_id")
+  user      User                 @relation(fields: [userId], references: [id])
+  category  NotificationCategory
+  title     String
+  body      String?
+  ctaLabel  String?              @map("cta_label")
+  ctaUrl    String?              @map("cta_url")
+  isRead    Boolean              @default(false) @map("is_read")
+  createdAt DateTime             @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

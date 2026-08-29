@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BookingsModule } from '../bookings/bookings.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { ReportsController } from './infrastructure/http/reports.controller';
 import { REPORT_REPOSITORY } from './domain/report.repository.port';
 import { PrismaReportRepository } from './infrastructure/persistence/prisma-report.repository';
@@ -17,7 +18,7 @@ import { RemoveReportPhotoUseCase } from './application/use-cases/remove-report-
 // TechnicianExtrasModule -> TechniciansModule. FILE_STORAGE vient de StorageModule
 // (@Global(), pas d'import explicite nécessaire).
 @Module({
-  imports: [BookingsModule],
+  imports: [BookingsModule, NotificationsModule],
   controllers: [ReportsController],
   providers: [
     GetOrCreateTechnicianReportUseCase,

@@ -6,6 +6,7 @@ import {
   TechnicianNotAvailableError,
 } from '../../domain/booking.repository.port';
 import { BookingEmailNotifierPort } from '../ports/booking-email-notifier.port';
+import { NotificationPublisherPort } from '../../../notifications/application/ports/notification-publisher.port';
 
 function makeRepo(overrides: Partial<BookingRepositoryPort> = {}): jest.Mocked<BookingRepositoryPort> {
   return {
@@ -28,6 +29,10 @@ function makeNotifier(overrides: Partial<BookingEmailNotifierPort> = {}): jest.M
   } as jest.Mocked<BookingEmailNotifierPort>;
 }
 
+function makeNotificationPublisher(): jest.Mocked<NotificationPublisherPort> {
+  return { publish: jest.fn().mockResolvedValue(undefined) };
+}
+
 const input = {
   availabilityId: 'slot-1',
   buyerId: 'buyer-1',
@@ -37,10 +42,18 @@ const input = {
 
 describe('CreateBookingUseCase', () => {
   it('crée la réservation quand le créneau est libre', async () => {
-    const booking = { id: 'booking-1', ...input, status: 'confirmed' } as any;
+    const booking = {
+      id: 'booking-1',
+      ...input,
+      status: 'confirmed',
+      technicianUserId: 'tech-user-1',
+      technicianCategory: 'technique',
+      buyerFullName: 'Buyer One',
+      slotStart: new Date('2026-09-01T10:00:00Z'),
+    } as any;
     const repo = makeRepo({ createIfSlotAvailable: jest.fn().mockResolvedValue(booking) });
     const notifier = makeNotifier();
-    const useCase = new CreateBookingUseCase(repo, notifier);
+    const useCase = new CreateBookingUseCase(repo, notifier, makeNotificationPublisher());
 
     const result = await useCase.execute(input);
 
@@ -54,9 +67,17 @@ describe('CreateBookingUseCase', () => {
       roomsConcerned: ['Salon', 'Cuisine'],
       projectDescription: 'Rafraîchir le salon et la cuisine, style scandinave.',
     };
-    const booking = { id: 'booking-1', ...decoInput, status: 'confirmed' } as any;
+    const booking = {
+      id: 'booking-1',
+      ...decoInput,
+      status: 'confirmed',
+      technicianUserId: 'tech-user-1',
+      technicianCategory: 'decoration',
+      buyerFullName: 'Buyer One',
+      slotStart: new Date('2026-09-01T10:00:00Z'),
+    } as any;
     const repo = makeRepo({ createIfSlotAvailable: jest.fn().mockResolvedValue(booking) });
-    const useCase = new CreateBookingUseCase(repo, makeNotifier());
+    const useCase = new CreateBookingUseCase(repo, makeNotifier(), makeNotificationPublisher());
 
     const result = await useCase.execute(decoInput);
 
@@ -68,7 +89,7 @@ describe('CreateBookingUseCase', () => {
     const repo = makeRepo({
       createIfSlotAvailable: jest.fn().mockRejectedValue(new SlotAlreadyBookedError()),
     });
-    const useCase = new CreateBookingUseCase(repo, makeNotifier());
+    const useCase = new CreateBookingUseCase(repo, makeNotifier(), makeNotificationPublisher());
 
     await expect(useCase.execute(input)).rejects.toBeInstanceOf(ConflictException);
   });
@@ -79,16 +100,24 @@ describe('CreateBookingUseCase', () => {
     const repo = makeRepo({
       createIfSlotAvailable: jest.fn().mockRejectedValue(new TechnicianNotAvailableError()),
     });
-    const useCase = new CreateBookingUseCase(repo, makeNotifier());
+    const useCase = new CreateBookingUseCase(repo, makeNotifier(), makeNotificationPublisher());
 
     await expect(useCase.execute(input)).rejects.toBeInstanceOf(ConflictException);
   });
 
   it("renvoie la réservation même si l'envoi de l'email de confirmation échoue (asynchrone, non bloquant)", async () => {
-    const booking = { id: 'booking-1', ...input, status: 'confirmed' } as any;
+    const booking = {
+      id: 'booking-1',
+      ...input,
+      status: 'confirmed',
+      technicianUserId: 'tech-user-1',
+      technicianCategory: 'technique',
+      buyerFullName: 'Buyer One',
+      slotStart: new Date('2026-09-01T10:00:00Z'),
+    } as any;
     const repo = makeRepo({ createIfSlotAvailable: jest.fn().mockResolvedValue(booking) });
     const notifier = makeNotifier({ sendConfirmation: jest.fn().mockRejectedValue(new Error('resend down')) });
-    const useCase = new CreateBookingUseCase(repo, notifier);
+    const useCase = new CreateBookingUseCase(repo, notifier, makeNotificationPublisher());
 
     const result = await useCase.execute(input);
 
@@ -97,7 +126,7 @@ describe('CreateBookingUseCase', () => {
 
   it('propage les erreurs inattendues du repository', async () => {
     const repo = makeRepo({ createIfSlotAvailable: jest.fn().mockRejectedValue(new Error('db down')) });
-    const useCase = new CreateBookingUseCase(repo, makeNotifier());
+    const useCase = new CreateBookingUseCase(repo, makeNotifier(), makeNotificationPublisher());
 
     await expect(useCase.execute(input)).rejects.toThrow('db down');
   });

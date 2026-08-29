@@ -8,6 +8,9 @@ import { StorageModule } from '../src/infrastructure/storage/storage.module';
 import { FILE_STORAGE } from '../src/infrastructure/storage/file-storage.port';
 import { BOOKING_REPOSITORY } from '../src/modules/bookings/domain/booking.repository.port';
 import { CONVERSATION_REPOSITORY } from '../src/modules/messaging/domain/conversation.repository.port';
+import { NOTIFICATION_PUBLISHER } from '../src/modules/notifications/application/ports/notification-publisher.port';
+import { NotificationsModule } from '../src/modules/notifications/notifications.module';
+import { NOTIFICATION_REPOSITORY } from '../src/modules/notifications/domain/notification.repository.port';
 import { User } from '../src/modules/users/domain/user.entity';
 import { Technician } from '../src/modules/technicians/domain/technician.entity';
 import { InMemoryUserRepository } from './fakes/in-memory-user.repository';
@@ -16,6 +19,8 @@ import { InMemoryAvailabilityRepository } from './fakes/in-memory-availability.r
 import { InMemoryBookingRepository } from './fakes/in-memory-booking.repository';
 import { InMemoryConversationRepository } from './fakes/in-memory-conversation.repository';
 import { FakeFileStorageAdapter } from './fakes/fake-file-storage.adapter';
+import { RecordingNotificationPublisher } from './fakes/recording-notification-publisher';
+import { InMemoryNotificationRepository } from './fakes/in-memory-notification.repository';
 import { finalizeTestApp } from './utils/finalize-test-app';
 
 describe('Messaging (e2e)', () => {
@@ -23,6 +28,7 @@ describe('Messaging (e2e)', () => {
   let jwt: JwtService;
   let bookingId: string;
   let otherBookingId: string;
+  let notifications: RecordingNotificationPublisher;
 
   function tokenFor(userId: string, role: 'acheteur' | 'technicien') {
     return jwt.sign({ sub: userId, role, email: `${userId}@example.com` });
@@ -65,11 +71,14 @@ describe('Messaging (e2e)', () => {
     });
     otherBookingId = otherBooking.id;
 
+    notifications = new RecordingNotificationPublisher();
+
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         JwtModule.register({ global: true, secret: process.env.JWT_SECRET }),
         StorageModule,
+        NotificationsModule,
         MessagingModule,
       ],
     })
@@ -79,6 +88,10 @@ describe('Messaging (e2e)', () => {
       .useValue(new InMemoryConversationRepository())
       .overrideProvider(FILE_STORAGE)
       .useValue(new FakeFileStorageAdapter())
+      .overrideProvider(NOTIFICATION_REPOSITORY)
+      .useValue(new InMemoryNotificationRepository())
+      .overrideProvider(NOTIFICATION_PUBLISHER)
+      .useValue(notifications)
       .compile();
 
     app = await finalizeTestApp(moduleRef);
@@ -109,6 +122,13 @@ describe('Messaging (e2e)', () => {
     expect(res.body.messages[0].content).toBe('Bonjour, à quelle heure arrivez-vous ?');
     // Vu depuis buyer-1 : l'interlocuteur affiché doit être le technicien, pas soi-même.
     expect(res.body.booking).toMatchObject({ interlocutorName: 'Tech One' });
+
+    expect(notifications.calls).toContainEqual(
+      expect.objectContaining({ userId: 'tech-user-1', title: 'Nouveau message de Buyer One' }),
+    );
+    expect(notifications.calls).toContainEqual(
+      expect.objectContaining({ userId: 'buyer-1', title: 'Nouveau message de Tech One' }),
+    );
   });
 
   it("un message vide sans pièce jointe est refusé (400)", async () => {

@@ -8,6 +8,9 @@ import { StorageModule } from '../src/infrastructure/storage/storage.module';
 import { FILE_STORAGE } from '../src/infrastructure/storage/file-storage.port';
 import { BOOKING_REPOSITORY } from '../src/modules/bookings/domain/booking.repository.port';
 import { REPORT_REPOSITORY } from '../src/modules/reports/domain/report.repository.port';
+import { NOTIFICATION_PUBLISHER } from '../src/modules/notifications/application/ports/notification-publisher.port';
+import { NotificationsModule } from '../src/modules/notifications/notifications.module';
+import { NOTIFICATION_REPOSITORY } from '../src/modules/notifications/domain/notification.repository.port';
 import { User } from '../src/modules/users/domain/user.entity';
 import { Technician } from '../src/modules/technicians/domain/technician.entity';
 import { InMemoryUserRepository } from './fakes/in-memory-user.repository';
@@ -16,12 +19,15 @@ import { InMemoryAvailabilityRepository } from './fakes/in-memory-availability.r
 import { InMemoryBookingRepository } from './fakes/in-memory-booking.repository';
 import { InMemoryReportRepository } from './fakes/in-memory-report.repository';
 import { FakeFileStorageAdapter } from './fakes/fake-file-storage.adapter';
+import { RecordingNotificationPublisher } from './fakes/recording-notification-publisher';
+import { InMemoryNotificationRepository } from './fakes/in-memory-notification.repository';
 import { finalizeTestApp } from './utils/finalize-test-app';
 
 describe('Reports (e2e)', () => {
   let app: INestApplication;
   let jwt: JwtService;
   let bookingId: string;
+  let notifications: RecordingNotificationPublisher;
 
   function tokenFor(userId: string, role: 'acheteur' | 'technicien') {
     return jwt.sign({ sub: userId, role, email: `${userId}@example.com` });
@@ -52,11 +58,14 @@ describe('Reports (e2e)', () => {
     });
     bookingId = booking.id;
 
+    notifications = new RecordingNotificationPublisher();
+
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         JwtModule.register({ global: true, secret: process.env.JWT_SECRET }),
         StorageModule,
+        NotificationsModule,
         ReportsModule,
       ],
     })
@@ -66,6 +75,10 @@ describe('Reports (e2e)', () => {
       .useValue(new InMemoryReportRepository())
       .overrideProvider(FILE_STORAGE)
       .useValue(new FakeFileStorageAdapter())
+      .overrideProvider(NOTIFICATION_REPOSITORY)
+      .useValue(new InMemoryNotificationRepository())
+      .overrideProvider(NOTIFICATION_PUBLISHER)
+      .useValue(notifications)
       .compile();
 
     app = await finalizeTestApp(moduleRef);
@@ -134,6 +147,10 @@ describe('Reports (e2e)', () => {
     expect(buyerView.body.generalConclusion).toBe('Bien globalement sain, quelques points de vigilance.');
     const electricitySection = buyerView.body.sections.find((s: any) => s.sectionType === 'electricity');
     expect(electricitySection).toMatchObject({ content: 'Installation aux normes, tableau récent.', status: 'good' });
+
+    expect(notifications.calls).toContainEqual(
+      expect.objectContaining({ userId: 'buyer-1', title: 'Rapport disponible' }),
+    );
   });
 
   it('un rapport soumis ne peut plus être modifié (409), même sans brouillon préexistant', async () => {

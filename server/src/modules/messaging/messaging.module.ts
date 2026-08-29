@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BookingsModule } from '../bookings/bookings.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { MessagingController } from './infrastructure/http/messaging.controller';
 import { CONVERSATION_REPOSITORY } from './domain/conversation.repository.port';
 import { PrismaConversationRepository } from './infrastructure/persistence/prisma-conversation.repository';
@@ -12,7 +13,7 @@ import { RequestMessageAttachmentUploadUrlUseCase } from './application/use-case
 // vérifier qui a le droit de voir/écrire dans une conversation) — même schéma que
 // ReportsModule -> BookingsModule. FILE_STORAGE vient de StorageModule (@Global()).
 @Module({
-  imports: [BookingsModule],
+  imports: [BookingsModule, NotificationsModule],
   controllers: [MessagingController],
   providers: [
     ListMyConversationsUseCase,

@@ -6,6 +6,9 @@ import * as request from 'supertest';
 import { BookingsModule } from '../src/modules/bookings/bookings.module';
 import { BOOKING_REPOSITORY } from '../src/modules/bookings/domain/booking.repository.port';
 import { BOOKING_EMAIL_NOTIFIER } from '../src/modules/bookings/application/ports/booking-email-notifier.port';
+import { NOTIFICATION_PUBLISHER } from '../src/modules/notifications/application/ports/notification-publisher.port';
+import { NotificationsModule } from '../src/modules/notifications/notifications.module';
+import { NOTIFICATION_REPOSITORY } from '../src/modules/notifications/domain/notification.repository.port';
 import { User } from '../src/modules/users/domain/user.entity';
 import { Technician } from '../src/modules/technicians/domain/technician.entity';
 import { InMemoryAvailabilityRepository } from './fakes/in-memory-availability.repository';
@@ -13,6 +16,8 @@ import { InMemoryTechnicianRepository } from './fakes/in-memory-technician.repos
 import { InMemoryUserRepository } from './fakes/in-memory-user.repository';
 import { InMemoryBookingRepository } from './fakes/in-memory-booking.repository';
 import { NoopBookingEmailNotifier } from './fakes/noop-booking-email-notifier';
+import { RecordingNotificationPublisher } from './fakes/recording-notification-publisher';
+import { InMemoryNotificationRepository } from './fakes/in-memory-notification.repository';
 import { finalizeTestApp } from './utils/finalize-test-app';
 
 describe('Bookings (e2e)', () => {
@@ -20,6 +25,7 @@ describe('Bookings (e2e)', () => {
   let availabilities: InMemoryAvailabilityRepository;
   let technicians: InMemoryTechnicianRepository;
   let bookings: InMemoryBookingRepository;
+  let notifications: RecordingNotificationPublisher;
   let jwt: JwtService;
   let slotId: string;
 
@@ -45,11 +51,13 @@ describe('Bookings (e2e)', () => {
     slotId = slot.id;
 
     bookings = new InMemoryBookingRepository(availabilities, technicians, users);
+    notifications = new RecordingNotificationPublisher();
 
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         JwtModule.register({ global: true, secret: process.env.JWT_SECRET }),
+        NotificationsModule,
         BookingsModule,
       ],
     })
@@ -57,6 +65,10 @@ describe('Bookings (e2e)', () => {
       .useValue(bookings)
       .overrideProvider(BOOKING_EMAIL_NOTIFIER)
       .useValue(new NoopBookingEmailNotifier())
+      .overrideProvider(NOTIFICATION_REPOSITORY)
+      .useValue(new InMemoryNotificationRepository())
+      .overrideProvider(NOTIFICATION_PUBLISHER)
+      .useValue(notifications)
       .compile();
 
     app = await finalizeTestApp(moduleRef);
@@ -78,6 +90,10 @@ describe('Bookings (e2e)', () => {
 
     expect(res.body.id).toEqual(expect.any(String));
     expect((await availabilities.findById(slotId))?.isBooked).toBe(true);
+
+    expect(notifications.calls).toContainEqual(
+      expect.objectContaining({ userId: 'tech-user-1', category: 'visite_technique', title: 'Nouvelle réservation' }),
+    );
   });
 
   it("un technicien ne peut pas réserver (RolesGuard réservé aux acheteurs)", async () => {
@@ -200,5 +216,9 @@ describe('Bookings (e2e)', () => {
       .expect(200);
 
     expect((await availabilities.findById(slotId))?.isBooked).toBe(false);
+
+    expect(notifications.calls).toContainEqual(
+      expect.objectContaining({ userId: 'tech-user-1', title: 'Réservation annulée' }),
+    );
   });
 });

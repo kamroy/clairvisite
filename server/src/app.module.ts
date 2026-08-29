@@ -12,7 +12,9 @@ import { AvailabilitiesModule } from './modules/availabilities/availabilities.mo
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AdminRolesModule } from './modules/admin-roles/admin-roles.module';
 import { RegionsModule } from './modules/regions/regions.module';
 import { CsrfModule } from './common/csrf/csrf.module';
 import { CsrfGuard } from './common/guards/csrf.guard';
@@ -32,7 +34,9 @@ import { CsrfGuard } from './common/guards/csrf.guard';
     BookingsModule,
     ReportsModule,
     MessagingModule,
+    NotificationsModule,
     AdminModule,
+    AdminRolesModule,
     RegionsModule,
   ],
   providers: [

@@ -8,6 +8,9 @@ import { TECHNICIAN_REPOSITORY } from '../src/modules/technicians/domain/technic
 import { Technician } from '../src/modules/technicians/domain/technician.entity';
 import { BOOKING_REPOSITORY } from '../src/modules/bookings/domain/booking.repository.port';
 import { BOOKING_EMAIL_NOTIFIER } from '../src/modules/bookings/application/ports/booking-email-notifier.port';
+import { NOTIFICATION_PUBLISHER } from '../src/modules/notifications/application/ports/notification-publisher.port';
+import { NotificationsModule } from '../src/modules/notifications/notifications.module';
+import { NOTIFICATION_REPOSITORY } from '../src/modules/notifications/domain/notification.repository.port';
 import { USER_REPOSITORY } from '../src/modules/users/domain/user.repository.port';
 import { User } from '../src/modules/users/domain/user.entity';
 import { InMemoryTechnicianRepository } from './fakes/in-memory-technician.repository';
@@ -15,6 +18,8 @@ import { InMemoryAvailabilityRepository } from './fakes/in-memory-availability.r
 import { InMemoryUserRepository } from './fakes/in-memory-user.repository';
 import { InMemoryBookingRepository } from './fakes/in-memory-booking.repository';
 import { NoopBookingEmailNotifier } from './fakes/noop-booking-email-notifier';
+import { RecordingNotificationPublisher } from './fakes/recording-notification-publisher';
+import { InMemoryNotificationRepository } from './fakes/in-memory-notification.repository';
 import { finalizeTestApp } from './utils/finalize-test-app';
 
 describe('Admin RBAC (e2e)', () => {
@@ -41,6 +46,7 @@ describe('Admin RBAC (e2e)', () => {
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         JwtModule.register({ global: true, secret: process.env.JWT_SECRET }),
+        NotificationsModule,
         AdminModule,
       ],
     })
@@ -52,6 +58,10 @@ describe('Admin RBAC (e2e)', () => {
       .useValue(new NoopBookingEmailNotifier())
       .overrideProvider(USER_REPOSITORY)
       .useValue(users)
+      .overrideProvider(NOTIFICATION_REPOSITORY)
+      .useValue(new InMemoryNotificationRepository())
+      .overrideProvider(NOTIFICATION_PUBLISHER)
+      .useValue(new RecordingNotificationPublisher())
       .compile();
 
     app = await finalizeTestApp(moduleRef);

@@ -7,6 +7,10 @@ import {
 } from '../../domain/booking.repository.port';
 import { PropertyType } from '../../domain/booking.entity';
 import { BOOKING_EMAIL_NOTIFIER, BookingEmailNotifierPort } from '../ports/booking-email-notifier.port';
+import {
+  NOTIFICATION_PUBLISHER,
+  NotificationPublisherPort,
+} from '../../../notifications/application/ports/notification-publisher.port';
 
 export interface CreateBookingInput {
   availabilityId: string;
@@ -26,6 +30,7 @@ export class CreateBookingUseCase {
   constructor(
     @Inject(BOOKING_REPOSITORY) private readonly bookings: BookingRepositoryPort,
     @Inject(BOOKING_EMAIL_NOTIFIER) private readonly notifier: BookingEmailNotifierPort,
+    @Inject(NOTIFICATION_PUBLISHER) private readonly notifications: NotificationPublisherPort,
   ) {}
 
   async execute(input: CreateBookingInput) {
@@ -54,6 +59,17 @@ export class CreateBookingUseCase {
     this.notifier
       .sendConfirmation(booking)
       .catch((err) => this.logger.error('Échec envoi email de confirmation', err));
+
+    this.notifications
+      .publish({
+        userId: booking.technicianUserId,
+        category: booking.technicianCategory === 'decoration' ? 'decoration' : 'visite_technique',
+        title: 'Nouvelle réservation',
+        body: `${booking.buyerFullName} a réservé un créneau le ${booking.slotStart.toLocaleDateString('fr-FR')}.`,
+        ctaLabel: 'Voir mon agenda',
+        ctaUrl: '/technician/dashboard',
+      })
+      .catch((err) => this.logger.error("Échec publication notification de réservation", err));
 
     return booking;
   }
