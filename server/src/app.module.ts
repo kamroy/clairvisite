@@ -10,6 +10,7 @@ import { TechniciansModule } from './modules/technicians/technicians.module';
 import { TechnicianExtrasModule } from './modules/technicians/technician-extras.module';
 import { AvailabilitiesModule } from './modules/availabilities/availabilities.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RegionsModule } from './modules/regions/regions.module';
 import { CsrfModule } from './common/csrf/csrf.module';
@@ -28,6 +29,7 @@ import { CsrfGuard } from './common/guards/csrf.guard';
     TechnicianExtrasModule,
     AvailabilitiesModule,
     BookingsModule,
+    ReportsModule,
     AdminModule,
     RegionsModule,
   ],

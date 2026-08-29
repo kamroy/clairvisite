@@ -167,7 +167,91 @@ model Booking {
   status          BookingStatus @default(confirmed)
   createdAt       DateTime      @default(now()) @map("created_at")
 
+  technicalReport TechnicalReport?
+
   @@map("bookings")
+}
+
+enum ReportStatus {
+  draft
+  submitted
+}
+
+// Sections prédéfinies (US-REPORT-01) — "Systèmes Techniques" du prototype est éclaté
+// en une section par système (electricity/plumbing/heating) plutôt qu'une section
+// unique, pour que chacun porte son propre statut de gravité (voir SystemStatus),
+// nécessaire au tableau de synthèse par système de US-REPORT-02.
+enum ReportSectionType {
+  introduction
+  structure
+  electricity
+  plumbing
+  heating
+}
+
+// Statut de gravité par système, alimente à la fois le tableau de synthèse et la liste
+// "Points d'Attention Prioritaires" (dérivée des sections non "good", pas d'entité dédiée).
+enum SystemStatus {
+  good
+  medium
+  critical
+}
+
+enum PhotoRole {
+  before
+  after
+}
+
+// Rapport technique rédigé par l'expert et consulté par l'acheteur (US-REPORT-01/02).
+// Un seul rapport par réservation (relation 1:1).
+model TechnicalReport {
+  id                String       @id @default(uuid())
+  bookingId         String       @unique @map("booking_id")
+  booking           Booking      @relation(fields: [bookingId], references: [id])
+  status            ReportStatus @default(draft)
+  // "Conclusion Générale" affichée en encadré en tête de la vue acheteur.
+  generalConclusion String?      @map("general_conclusion")
+  submittedAt       DateTime?    @map("submitted_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+
+  sections ReportSection[]
+
+  @@map("technical_reports")
+}
+
+model ReportSection {
+  id          String            @id @default(uuid())
+  reportId    String            @map("report_id")
+  report      TechnicalReport   @relation(fields: [reportId], references: [id])
+  sectionType ReportSectionType @map("section_type")
+  // Texte enrichi limité à **gras** / _italique_ (markdown minimal, jamais de HTML brut
+  // stocké ni rendu — voir client/src/lib/richText.js) : évite d'introduire une
+  // dépendance éditeur WYSIWYG pour un besoin aussi restreint, sans risque XSS.
+  content String?
+  // Uniquement pertinent pour les sections "système" (electricity/plumbing/heating) ;
+  // null pour introduction/structure (sections narratives sans statut de gravité).
+  status SystemStatus?
+
+  photos ReportPhoto[]
+
+  @@unique([reportId, sectionType])
+  @@map("report_sections")
+}
+
+// Photos par section (avant/après optionnel via `role`) — sert aussi de "documents
+// annexes téléchargeables" (US-REPORT-02) : chaque photo est individuellement
+// téléchargeable via une URL pré-signée, pas de type de document séparé.
+model ReportPhoto {
+  id        String        @id @default(uuid())
+  sectionId String        @map("section_id")
+  section   ReportSection @relation(fields: [sectionId], references: [id])
+  key       String
+  caption   String?
+  role      PhotoRole?
+  position  Int           @default(0)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("report_photos")
 }
 
 model Region {
