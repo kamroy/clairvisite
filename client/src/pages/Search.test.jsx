@@ -15,10 +15,10 @@ vi.mock("../lib/api", () => ({
   },
 }));
 
-function renderSearch(client = createTestQueryClient()) {
+function renderSearch(client = createTestQueryClient(), initialEntries = ["/"]) {
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <Search />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -117,6 +117,24 @@ describe("Search — recherche et scroll infini", () => {
     await waitFor(() =>
       expect(screen.getByText("Aucun technicien disponible pour ces critères.")).toBeInTheDocument(),
     );
+  });
+
+  it("lance une recherche pré-filtrée par catégorie quand arrivé depuis un lien ?category=... (page d'accueil)", async () => {
+    api.searchTechnicians.mockResolvedValue(technicianPage("t1", "Sophie Laurent", { hasMore: false, page: 1 }));
+
+    renderSearch(createTestQueryClient(), ["/search?category=decoration"]);
+
+    await waitFor(() => expect(screen.getByText(/Sophie Laurent/)).toBeInTheDocument());
+    expect(api.searchTechnicians).toHaveBeenCalledWith({
+      region: "",
+      date: "",
+      specialty: "",
+      category: "decoration",
+      experience: "",
+      sort: "",
+      page: 1,
+      pageSize: 12,
+    });
   });
 
   it("affiche le message d'erreur quand la recherche échoue", async () => {

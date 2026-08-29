@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Field from "../components/Field";
 import Button from "../components/Button";
@@ -200,10 +200,15 @@ const SORT_OPTIONS = [
 ];
 
 export default function Search() {
+  // Pré-remplissage depuis les CTA de la page d'accueil (US-SEARCH-04, ex. /search?category=decoration) :
+  // lu une seule fois au montage, la sélection manuelle prend ensuite le dessus.
+  const [urlParams] = useSearchParams();
+  const initialCategory = urlParams.get("category") ?? "";
+
   const [region, setRegion] = useState("");
   const [date, setDate] = useState("");
   const [specialty, setSpecialty] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(initialCategory);
   const [experience, setExperience] = useState("");
   const [sort, setSort] = useState("");
   const [searchParams, setSearchParams] = useState(null);
@@ -216,6 +221,11 @@ export default function Search() {
     setSearchParams(params);
     resultsRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
+
+  useEffect(() => {
+    if (initialCategory) runSearch(currentParams({ category: initialCategory }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function currentParams(overrides = {}) {
     return { region, date, specialty, category, experience, sort, ...overrides };
@@ -410,7 +420,7 @@ export default function Search() {
             Rejoignez Clairvisite pour recevoir des demandes de clairvisite près de chez vous et gérer votre
             agenda en toute autonomie.
           </p>
-          <Link to="/signup?role=technicien" className="mt-1">
+          <Link to="/signup/pro" className="mt-1">
             <Button variant="ghost">Devenir technicien partenaire</Button>
           </Link>
         </section>
