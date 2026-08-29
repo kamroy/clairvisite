@@ -25,7 +25,14 @@ export const queryKeys = {
     mine: (params) => ["conversations", "mine", params],
     forBooking: (bookingId) => ["conversations", bookingId],
   },
+  notifications: {
+    mine: (params) => ["notifications", "mine", params],
+  },
   admin: {
     technicians: (params) => ["admin", "technicians", params],
+    permissionGroups: ["admin", "permissionGroups"],
+    roles: ["admin", "roles"],
+    admins: ["admin", "admins"],
+    auditLog: (params) => ["admin", "auditLog", params],
   },
 };

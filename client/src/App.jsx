@@ -16,7 +16,9 @@ import BookingReport from "./pages/BookingReport";
 import BuyerBookings from "./pages/BuyerBookings";
 import MyProjects from "./pages/MyProjects";
 import Messages from "./pages/Messages";
+import Notifications from "./pages/Notifications";
 import Admin from "./pages/Admin";
+import AdminRoles from "./pages/AdminRoles";
 
 export default function App() {
   return (
@@ -38,9 +40,11 @@ export default function App() {
       <Route path="/bookings" element={<BuyerBookings />} />
       <Route path="/messages" element={<Messages />} />
       <Route path="/messages/:bookingId" element={<Messages />} />
+      <Route path="/notifications" element={<Notifications />} />
       <Route path="/technician/bookings/:bookingId/report" element={<TechnicianReportEditor />} />
       <Route path="/technician/*" element={<TechnicianDashboard />} />
       <Route path="/admin" element={<Admin />} />
+      <Route path="/admin/roles" element={<AdminRoles />} />
     </Routes>
   );
 }

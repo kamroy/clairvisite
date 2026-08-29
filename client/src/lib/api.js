@@ -145,6 +145,10 @@ export const api = {
       body: JSON.stringify({ file_name: fileName, content_type: contentType }),
     }),
 
+  notifications: (params) => request(`/notifications?${toQueryString(params)}`),
+  markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: "PATCH" }),
+  markAllNotificationsRead: () => request("/notifications/read-all", { method: "PATCH" }),
+
   regions: () => request("/regions"),
 
   adminTechnicians: (params) => request(`/admin/technicians?${toQueryString(params)}`),
@@ -153,4 +157,21 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+
+  adminPermissionGroups: () => request("/admin/permissions"),
+  adminRoles: () => request("/admin/roles"),
+  createAdminRole: (name, permissions) =>
+    request("/admin/roles", { method: "POST", body: JSON.stringify({ name, permissions }) }),
+  updateAdminRolePermissions: (id, permissions) =>
+    request(`/admin/roles/${id}/permissions`, { method: "PATCH", body: JSON.stringify({ permissions }) }),
+  cloneAdminRole: (id, name) =>
+    request(`/admin/roles/${id}/clone`, { method: "POST", body: JSON.stringify({ name }) }),
+  deleteAdminRole: (id) => request(`/admin/roles/${id}`, { method: "DELETE" }),
+  adminAdmins: () => request("/admin/admins"),
+  assignAdminRole: (userId, adminRoleId) =>
+    request(`/admin/admins/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify(adminRoleId ? { admin_role_id: adminRoleId } : {}),
+    }),
+  adminAuditLog: (params) => request(`/admin/audit-log?${toQueryString(params)}`),
 };

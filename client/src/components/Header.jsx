@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useMe, useLogout } from "../hooks/useAuth";
+import { useMyNotifications } from "../hooks/useNotifications";
 import { initials } from "../lib/format";
 
 const HOME_BY_ROLE = { acheteur: "/projects", technicien: "/technician/dashboard", admin: "/admin" };
@@ -9,6 +10,8 @@ export default function Header() {
   const meQuery = useMe();
   const logout = useLogout();
   const user = meQuery.data;
+  const notificationsQuery = useMyNotifications({ enabled: Boolean(user) });
+  const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
 
   async function handleLogout() {
     await logout.mutateAsync();
@@ -26,6 +29,14 @@ export default function Header() {
           <>
             <Link to="/messages" className="text-sm font-medium text-ink hover:underline">
               Messages
+            </Link>
+            <Link to="/notifications" className="relative text-sm font-medium text-ink hover:underline">
+              Notifications
+              {unreadCount > 0 && (
+                <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 text-[10px] font-medium text-white">
+                  {unreadCount}
+                </span>
+              )}
             </Link>
             <Link to="/profile" className="flex items-center gap-2">
               <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-line/40 text-xs font-semibold text-ink">
