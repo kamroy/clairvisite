@@ -52,7 +52,7 @@ de** m'inspirer avant de choisir une professionnelle.
   (voir [00-overview.md](00-overview.md), persona "entièrement nouveau").
 - **Écart avec l'existant** : aucun équivalent — persona et modèle de données à créer de zéro.
 
-### US-SEARCH-04 — Page d'accueil avec mise en avant des deux services
+### US-SEARCH-04 — Page d'accueil avec mise en avant des deux services ✅ Implémentée (2026-08-29)
 **En tant que** visiteur, **je veux** une page d'accueil présentant clairement les deux offres
 ("Contre-visite Technique" et "Décoration & Idées") et le déroulé en 4 étapes (Diagnostic → Comparaison →
 Clé en main → Exécution), **afin de** comprendre l'offre avant de m'inscrire.
@@ -62,6 +62,12 @@ Clé en main → Exécution), **afin de** comprendre l'offre avant de m'inscrire
 - **Priorité** : Must have (vitrine).
 - **Écart avec l'existant** : aucune page d'accueil marketing dans `client/src/pages` actuellement — à
   créer.
+
+**Implémentation** : [Home.jsx](../../client/src/pages/Home.jsx) en `/` (l'ancienne racine, qui pointait
+vers [Search.jsx](../../client/src/pages/Search.jsx), reste disponible sur `/search`). Les CTA des deux
+cartes renvoient vers la recherche pré-filtrée par catégorie (`/search?category=technique` ou
+`?category=decoration`) plutôt que vers un tunnel dédié — `Search.jsx` lit désormais `?category=` au
+montage pour pré-remplir le filtre et lancer la recherche.
 
 ## Priorisation suggérée
 Must have : US-SEARCH-01, 02, 04. Should have : US-SEARCH-03 (conditionné à la décision produit sur la

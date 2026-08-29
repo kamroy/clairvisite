@@ -42,11 +42,37 @@ estimation adaptée.
 - **Écart avec l'existant** : aucun équivalent — à créer (nouveau type de demande, distinct d'une
   réservation de créneau).
 
-### US-BOOK-03 — Réserver une consultation décoration
+### US-BOOK-03 — Réserver une consultation décoration ✅ Implémentée (2026-08-29)
 **En tant qu'** acheteur, **je veux** un tunnel de réservation dédié à la décoration (détails du projet →
 choix de la décoratrice → confirmation), **afin de** planifier une consultation déco.
 - **Priorité** : Should have — dépend de la décision produit sur le vertical "décoration".
-- **Écart avec l'existant** : aucun équivalent.
+- **Écart avec l'existant** : aucun équivalent au moment de la rédaction de cette spec.
+
+**Note (2026-08-29)** : implémentée par anticipation, avant la Phase 4 initialement prévue dans
+[10-sequencement.md](10-sequencement.md) — le blocage "décision produit sur le vertical déco" ne
+tenait plus : la Phase 0 avait déjà tranché pour un rôle professionnel unique + champ `category`
+(`technique`/`decoration`/`architecture`), donc la "décoratrice" est simplement un
+[Technician](../../server/prisma/schema.prisma) avec `category: decoration` — aucun nouveau persona
+serveur à créer.
+
+**Implémentation** : même tunnel que [US-BOOK-01](#us-book-01--réserver-une-contre-visite-technique-en-3-étapes)
+([BookingTunnel.jsx](../../client/src/pages/BookingTunnel.jsx)), étape 1 adaptée selon la catégorie du
+technicien plutôt qu'un tunnel dupliqué (étapes 2/3 — créneau, confirmation — identiques dans les deux
+cas). Pour une consultation déco, l'étape 1 ajoute "Pièces concernées" (texte libre) et "Décrivez votre
+projet" (style, budget, contraintes en texte libre) aux champs déjà collectés pour une contre-visite
+(type de bien, surface, adresse). Deux nouveaux champs sur `Booking` : `roomsConcerned` (`String[]`) et
+`projectDescription` (`String?`). Le type de prestation affiché (Mes Projets, dashboard expert) est
+dérivé par jointure depuis `technician.category` à la lecture, pas dupliqué sur `Booking`.
+
+**Simplification assumée, comme pour US-BOOK-01** : "choix de la décoratrice" n'est pas une étape du
+tunnel — la décoratrice est déjà choisie en arrivant depuis son profil public (Recherche → Profil →
+"Réserver une consultation"), cohérent avec la page d'accueil ([US-SEARCH-04](02-recherche-et-decouverte.md))
+dont le CTA "Explorer la décoration" renvoie vers la recherche filtrée par catégorie plutôt que
+directement dans le tunnel.
+
+**Non traité** : pas de taxonomie de styles déco (Haussmannien/Scandinave/Industriel...) en champ
+structuré — capturée en texte libre dans "Décrivez votre projet" plutôt que d'anticiper sur
+[US-SEARCH-03](02-recherche-et-decouverte.md) (hub déco avec styles), non construite.
 
 ### US-BOOK-04 — Suivre tous mes projets dans un tableau de bord unique
 **En tant qu'** acheteur, **je veux** une page "Mes Projets" listant mes démarches en cours (avec badge de

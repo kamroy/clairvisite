@@ -83,10 +83,16 @@ réservation → paiement → rapport → échange avec l'expert.
 - US-ADMIN-06, 07, 08 (gestion clients, gestion experts au quotidien, support & litiges)
 
 ## Phase 4 — Vertical métier "Décoration d'intérieur" (Should have, conditionné)
-Ce persona est **entièrement nouveau** (aucune trace dans le code actuel) — à ne lancer qu'une fois la
-décision produit confirmée sur ce vertical, et après la Phase 1 (dépend du même modèle de recherche/profil).
-- US-SEARCH-03 (hub décoration)
-- US-BOOK-02, 03 (devis travaux, conseil déco)
+Ce persona n'est **plus entièrement nouveau** : la Phase 0 a tranché pour un rôle professionnel unique +
+champ `category`, donc une "décoratrice" est un `Technician` avec `category: decoration` — le blocage
+initial ("dépend de la décision produit confirmée sur ce vertical") ne tient plus pour les stories qui ne
+dépendent que de ce modèle.
+- ✅ US-BOOK-03 (conseil déco) — implémentée en avance sur ce séquencement (2026-08-29), sur demande
+  explicite, en réutilisant le tunnel US-BOOK-01 (voir [03-reservation-et-projets.md](03-reservation-et-projets.md#us-book-03--réserver-une-consultation-décoration--implémentée-2026-08-29))
+- US-SEARCH-03 (hub décoration — reste à faire, dépend d'une vraie décision produit sur la galerie
+  d'inspirations et sa taxonomie de styles)
+- US-BOOK-02 (devis travaux — reste à faire, persona acheteur uniquement, aucune dépendance sur la
+  catégorie décoration)
 
 ## Phase 5 — Pilotage & confort (Could have)
 Peut être livré en continu après la Phase 3, sans bloquer le reste :
@@ -102,7 +108,7 @@ Phase 0  Fondations             (stockage fichiers, PSP, décisions modèle de d
 Phase 1  Écart existant         AUTH-01/02/04/06, SEARCH-01/02, BOOK-01/04, DASH-01
 Phase 2  Boucler la transaction PAY-01, REPORT-01/02, COMM-01
 Phase 3  Confiance & conformité PAY-02, COMM-02, DOC-01, ADMIN-01/06/07/08
-Phase 4  Vertical déco          SEARCH-03, BOOK-02/03            (conditionné, parallèle possible dès Phase 1)
+Phase 4  Vertical déco          SEARCH-03, BOOK-02 (BOOK-03 ✅ fait)  (conditionné, parallèle possible dès Phase 1)
 Phase 5  Pilotage & confort     DASH-02, ADMIN-02/03/04/05/09, COMM-03
 ```
 
