@@ -33,9 +33,14 @@ export default function Admin() {
     <div className="mx-auto max-w-4xl px-4 py-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="font-serif text-xl font-semibold">Gestion des Experts & Techniciens</h1>
-        <Link to="/profile" className="text-xs font-medium text-ink underline">
-          Mon profil
-        </Link>
+        <div className="flex gap-4">
+          <Link to="/admin/roles" className="text-xs font-medium text-ink underline">
+            Rôles & Permissions
+          </Link>
+          <Link to="/profile" className="text-xs font-medium text-ink underline">
+            Mon profil
+          </Link>
+        </div>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
