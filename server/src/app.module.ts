@@ -11,6 +11,7 @@ import { TechnicianExtrasModule } from './modules/technicians/technician-extras.
 import { AvailabilitiesModule } from './modules/availabilities/availabilities.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RegionsModule } from './modules/regions/regions.module';
 import { CsrfModule } from './common/csrf/csrf.module';
@@ -30,6 +31,7 @@ import { CsrfGuard } from './common/guards/csrf.guard';
     AvailabilitiesModule,
     BookingsModule,
     ReportsModule,
+    MessagingModule,
     AdminModule,
     RegionsModule,
   ],

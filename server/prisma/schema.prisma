@@ -66,6 +66,7 @@ model User {
 
   technician Technician?
   bookings   Booking[]
+  messages   Message[]
 
   @@unique([authProvider, oidcSubject])
   @@map("users")
@@ -168,8 +169,40 @@ model Booking {
   createdAt       DateTime      @default(now()) @map("created_at")
 
   technicalReport TechnicalReport?
+  conversation    Conversation?
 
   @@map("bookings")
+}
+
+// Une conversation par réservation (US-COMM-01) : l'interlocuteur (acheteur <->
+// technicien) est déjà déterminé par la réservation, pas besoin d'un modèle de
+// participants séparé. Créée paresseusement au premier accès (même schéma que
+// TechnicalReport), pas à la création de la réservation.
+model Conversation {
+  id        String   @id @default(uuid())
+  bookingId String   @unique @map("booking_id")
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String       @map("sender_id")
+  sender         User         @relation(fields: [senderId], references: [id])
+  // L'un des deux au moins est renseigné : texte seul, pièce jointe seule, ou les deux.
+  content            String?
+  attachmentKey      String?  @map("attachment_key")
+  attachmentFileName String?  @map("attachment_file_name")
+  createdAt          DateTime @default(now()) @map("created_at")
+  readAt             DateTime? @map("read_at")
+
+  @@map("messages")
 }
 
 enum ReportStatus {
