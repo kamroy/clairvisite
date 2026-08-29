@@ -71,20 +71,29 @@ function OngoingProjectCard({ booking }) {
           <Button variant="ghost">Contacter l'expert</Button>
         </a>
       </div>
+      {booking.technicianCategory !== "decoration" && (
+        <Link to={`/bookings/${booking.id}/report`} className="text-center text-xs font-medium text-ink underline">
+          Voir le rapport technique
+        </Link>
+      )}
     </div>
   );
 }
 
 function PastProjectRow({ booking }) {
+  const isCancelled = booking.status === "cancelled";
   return (
     <div className="flex items-center justify-between gap-2 py-2.5">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-ink">{booking.technicianFullName}</p>
         <p className="text-xs text-muted">{formatDateTime(booking.slotStart)}</p>
+        {!isCancelled && booking.technicianCategory !== "decoration" && (
+          <Link to={`/bookings/${booking.id}/report`} className="text-xs font-medium text-ink underline">
+            Rapport
+          </Link>
+        )}
       </div>
-      <Badge variant={booking.status === "cancelled" ? "neutral" : "ok"}>
-        {booking.status === "cancelled" ? "Annulée" : "Terminée"}
-      </Badge>
+      <Badge variant={isCancelled ? "neutral" : "ok"}>{isCancelled ? "Annulée" : "Terminée"}</Badge>
     </div>
   );
 }

@@ -15,12 +15,13 @@ export function useMyBookings(options = {}) {
   });
 }
 
-export function useTechnicianBookings() {
+export function useTechnicianBookings(options = {}) {
   return useInfiniteQuery({
     queryKey: queryKeys.bookings.technician,
     queryFn: ({ pageParam }) => api.technicianBookings({ page: pageParam, pageSize: PAGE_SIZE }),
     initialPageParam: 1,
     getNextPageParam,
+    ...options,
   });
 }
 

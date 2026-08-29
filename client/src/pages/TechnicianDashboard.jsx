@@ -486,7 +486,8 @@ function DashboardTab() {
   const hourlyRate = profileQuery.data?.hourlyRate ?? null;
   // Toutes les réservations d'un technicien portent le même type de prestation que lui
   // (US-BOOK-03) : pas besoin de le dériver réservation par réservation.
-  const serviceLabel = profileQuery.data?.category === "decoration" ? "Consultation déco" : "Contre-visite technique";
+  const isDeco = profileQuery.data?.category === "decoration";
+  const serviceLabel = isDeco ? "Consultation déco" : "Contre-visite technique";
   const bookings = flattenPages(bookingsQuery.data); // triées par date croissante, toutes confirmées
 
   const now = Date.now();
@@ -516,14 +517,9 @@ function DashboardTab() {
         </p>
       )}
 
-      <div className="flex gap-2">
-        <Link to="/technician/availabilities" className="flex-1">
-          <Button variant="ghost">Planifier une visite</Button>
-        </Link>
-        <Button variant="ghost" disabled className="flex-1 cursor-not-allowed opacity-50" title="Disponible en Phase 2">
-          Rédiger un rapport
-        </Button>
-      </div>
+      <Link to="/technician/availabilities">
+        <Button variant="ghost">Planifier une visite</Button>
+      </Link>
 
       <section>
         <div className="mb-2 flex items-center justify-between">
@@ -541,7 +537,18 @@ function DashboardTab() {
                   {serviceLabel} · {b.propertyAddress}
                 </p>
               </div>
-              <Badge variant="ok">RDV confirmé</Badge>
+              <div className="flex flex-none items-center gap-2">
+                {!isDeco && (
+                  <Link
+                    to={`/technician/bookings/${b.id}/report`}
+                    state={{ booking: b }}
+                    className="text-xs font-medium text-ink underline"
+                  >
+                    Rapport
+                  </Link>
+                )}
+                <Badge variant="ok">RDV confirmé</Badge>
+              </div>
             </div>
           ))}
           {upcoming.length === 0 && <p className="text-sm text-muted">Aucun dossier en cours.</p>}
@@ -581,11 +588,14 @@ function DashboardTab() {
 }
 
 function BookingsTab() {
+  const profileQuery = useMyTechnicianProfile();
   const bookingsQuery = useTechnicianBookings();
 
-  if (bookingsQuery.isLoading) return <Loading />;
+  if (bookingsQuery.isLoading || profileQuery.isLoading) return <Loading />;
   if (bookingsQuery.isError) return <ErrorMessage error={bookingsQuery.error} />;
+  if (profileQuery.isError) return <ErrorMessage error={profileQuery.error} />;
   const bookings = flattenPages(bookingsQuery.data);
+  const isDeco = profileQuery.data?.category === "decoration";
 
   return (
     <div className="flex flex-col gap-4 px-4 py-5">
@@ -599,6 +609,15 @@ function BookingsTab() {
           <p className="text-xs text-ink/70">📍 {b.propertyAddress}</p>
           <div className="h-px bg-line" />
           <p className="text-xs text-ink/70">{b.buyerPhone}</p>
+          {!isDeco && (
+            <Link
+              to={`/technician/bookings/${b.id}/report`}
+              state={{ booking: b }}
+              className="text-xs font-medium text-ink underline"
+            >
+              Rédiger le rapport
+            </Link>
+          )}
         </div>
       ))}
       {bookings.length === 0 && <p className="text-sm text-muted">Aucune réservation à venir.</p>}

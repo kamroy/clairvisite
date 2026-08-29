@@ -18,6 +18,9 @@ export const queryKeys = {
     mine: ["bookings", "mine"],
     technician: ["bookings", "technician"],
   },
+  reports: {
+    forBooking: (bookingId) => ["reports", bookingId],
+  },
   admin: {
     technicians: (params) => ["admin", "technicians", params],
   },

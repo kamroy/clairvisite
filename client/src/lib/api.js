@@ -110,6 +110,31 @@ export const api = {
   technicianBookings: (params) => request(`/technicians/me/bookings?${toQueryString(params)}`),
   cancelBooking: (id) => request(`/bookings/${id}/cancel`, { method: "PATCH" }),
 
+  getBookingReport: (bookingId) => request(`/bookings/${bookingId}/report`),
+  updateReportConclusion: (bookingId, generalConclusion) =>
+    request(`/bookings/${bookingId}/report`, {
+      method: "PATCH",
+      body: JSON.stringify({ general_conclusion: generalConclusion }),
+    }),
+  updateReportSection: (bookingId, sectionType, data) =>
+    request(`/bookings/${bookingId}/report/sections/${sectionType}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  submitReport: (bookingId) => request(`/bookings/${bookingId}/report/submit`, { method: "POST" }),
+  requestReportPhotoUploadUrl: (bookingId, sectionType, fileName, contentType) =>
+    request(`/bookings/${bookingId}/report/sections/${sectionType}/photos/upload-url`, {
+      method: "POST",
+      body: JSON.stringify({ file_name: fileName, content_type: contentType }),
+    }),
+  attachReportPhoto: (bookingId, sectionType, key, caption, role) =>
+    request(`/bookings/${bookingId}/report/sections/${sectionType}/photos`, {
+      method: "POST",
+      body: JSON.stringify({ key, caption, role }),
+    }),
+  removeReportPhoto: (bookingId, photoId) =>
+    request(`/bookings/${bookingId}/report/photos/${photoId}`, { method: "DELETE" }),
+
   regions: () => request("/regions"),
 
   adminTechnicians: (params) => request(`/admin/technicians?${toQueryString(params)}`),
