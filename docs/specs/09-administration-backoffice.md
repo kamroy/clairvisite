@@ -18,7 +18,7 @@ Admin.
 
 ## User stories
 
-### US-ADMIN-01 — Gérer des rôles admin à permissions fines
+### US-ADMIN-01 — Gérer des rôles admin à permissions fines ✅ Implémentée (2026-08-29)
 **En tant qu'** admin principal, **je veux** créer des rôles (Super Admin, Platform Manager, Support Agent,
 Financial Auditor...) avec des permissions groupées par domaine (Gestion des utilisateurs, Finances,
 Support, Paramètres plateforme) activables individuellement, assigner des utilisateurs à un rôle, et
@@ -32,6 +32,36 @@ dupliquer un rôle existant comme base, **afin de** déléguer l'administration 
   de système de rôles/permissions granulaire (seul `Role.admin` existe dans
   [schema.prisma](../../server/prisma/schema.prisma)) — à vérifier et étendre en RBAC si plusieurs
   administrateurs doivent coexister.
+
+**Implémentation** : nouveau module `admin-roles/`, séparé de l'`AdminModule` existant (validation
+technicien) pour ne pas perturber son isolation DI en e2e. Modèles `AdminRole` (nom, permissions en
+tableau de chaînes, `isSystem`) et `AdminAuditLogEntry` ; champ `adminRoleId` nullable ajouté sur `User`.
+Catalogue de 8 permissions fixes réparties sur les 4 groupes de la spec (2 par groupe), codé en dur (comme
+`ReportSectionType`) plutôt que stocké en base. Le rôle "Super Admin" est **auto-créé au premier accès**
+(même pattern get-or-create que le rapport technique) avec toutes les permissions, `isSystem: true` —
+évite un script de migration séparé pour les comptes admin déjà existants (un admin sans `adminRoleId`
+explicite compte comme Super Admin). Page
+[AdminRoles.jsx](../../client/src/pages/AdminRoles.jsx) accessible depuis `/admin/roles` (lien "Rôles &
+Permissions" sur la page `/admin` existante) : liste des rôles avec compteur d'utilisateurs, panneau de
+permissions par groupe, formulaire de création, bouton "Cloner ce rôle", tableau des admins avec sélecteur
+de rôle, et le journal d'audit repliable.
+
+**Simplifications assumées** :
+- **Aucun endpoint (existant ou nouveau) ne consulte encore les permissions fines pour autoriser une
+  action** : tout continue de passer par le contrôle grossier `role: 'admin'` (`RolesGuard`), y compris les
+  endpoints de ce nouveau module lui-même. Retrofiter les endpoints admin existants (validation technicien,
+  liste des réservations) pour consulter une permission précise (ex. `users:manage`) est un futur chantier —
+  cela ne devient réellement utile que lorsqu'il existe de vrais flux différenciés (finance, support) à
+  protéger séparément, ce qui n'est pas encore le cas.
+- **Le rôle Super Admin ne peut être ni renommé, ni supprimé, ni voir ses permissions modifiées** —
+  protection volontairement stricte contre un verrouillage accidentel de l'accès admin.
+- **Journal d'audit limité aux actions RBAC elles-mêmes** (création/modification/clonage/suppression de
+  rôle, réassignation d'un admin) — les autres actions admin déjà existantes (validation technicien, etc.)
+  ne sont pas encore journalisées.
+- Vérifié en réel contre Postgres (comptes admin réels, pas seulement les fakes e2e) : bootstrap du rôle
+  Super Admin, création d'un rôle avec un sous-ensemble de permissions, rejet d'une permission inconnue,
+  réassignation d'un second admin (le compteur d'utilisateurs se déplace bien entre rôles), clonage,
+  refus de suppression d'un rôle encore assigné (409) et du rôle Super Admin (403), et journal d'audit.
 
 ### US-ADMIN-02 — Piloter la couverture géographique et la tarification par région
 **En tant qu'** admin, **je veux** une carte des zones actives/partielles avec, par région, des interrupteurs
@@ -111,5 +141,5 @@ le document, **afin de** produire des analyses ad hoc sans requête SQL manuelle
   des données à exporter — à séquencer en dernier.
 
 ## Priorisation suggérée
-Must have : US-ADMIN-01 (dès qu'il y a plus d'un admin). Should have : US-ADMIN-02, 06, 07, 08. Could have :
-US-ADMIN-03, 04, 05, 09.
+Must have : US-ADMIN-01 ✅ (dès qu'il y a plus d'un admin). Should have : US-ADMIN-02, 06, 07, 08. Could
+have : US-ADMIN-03, 04, 05, 09.

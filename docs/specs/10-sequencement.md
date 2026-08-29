@@ -13,7 +13,7 @@ refaire en double :
 |---|---|---|
 | **Stockage de fichiers** (S3 ou équivalent) | Rapport technique (photos), Signature (devis PDF + doc signé), Gestion documentaire, Inscription expert (pièces justificatives) | ✅ Fait — MinIO (S3-compatible) en local, AWS S3 en prod |
 | **PSP de paiement** | Paiement (US-PAY-01) | ✅ Décidé — Stripe, intégration reportée en Phase 2 |
-| **Canal temps réel** (WebSocket) | Messagerie (US-COMM-01), Centre de notifications (US-COMM-02) | NestJS Gateway (socket.io) — pas de nouveau service externe nécessaire, à faire en Phase 2/3 |
+| **Canal temps réel** (WebSocket) | Messagerie (US-COMM-01), Centre de notifications (US-COMM-02) | ❌ Jamais construit — les deux stories ont finalement opté pour du polling (la spec autorisait les deux options), voir [06-communication.md](06-communication.md) |
 
 Deux points fonctionnels, déjà signalés comme "points ouverts" dans les specs, **bloquent le modèle de
 données** et doivent être tranchés avant la Phase 1 :
@@ -81,13 +81,20 @@ Le parcours "contre-visite technique" est donc complet de bout en bout *hors pai
 réservation → rapport → échange avec l'expert. Le paiement reste la pièce manquante pour boucler
 entièrement la transaction.
 
-## Phase 3 — Confiance & conformité (Should have)
-- US-PAY-02 (signature électronique du devis) — *réutilise le stockage fichiers*
-- US-COMM-02 (centre de notifications) — *réutilise le canal temps réel*
+## Phase 3 — Confiance & conformité (Should have) ⚠️ Partielle (2026-08-29)
+- US-PAY-02 (signature électronique du devis) — *réutilise le stockage fichiers*. Reste à faire (dépend de
+  US-PAY-01, lui-même reporté en Phase 2).
+- ✅ US-COMM-02 (centre de notifications) — implémenté avec du **polling plutôt que le canal temps réel**
+  initialement pressenti (même choix que la messagerie, Phase 2), voir
+  [06-communication.md](06-communication.md).
 - US-DOC-01 (gestion documentaire centralisée) — *réutilise le stockage fichiers, regroupe les sorties de
-  Phase 2 (rapports, devis signés)*
-- US-ADMIN-01 (rôles & permissions admin) — dès qu'il y a plus d'un administrateur
-- US-ADMIN-06, 07, 08 (gestion clients, gestion experts au quotidien, support & litiges)
+  Phase 2 (rapports, devis signés)*. Reste à faire.
+- ✅ US-ADMIN-01 (rôles & permissions admin) — implémenté en avance sur ce séquencement (2026-08-29), sur
+  demande explicite, avant que Phase 3 ne soit officiellement attaquée dans l'ordre. Voir
+  [09-administration-backoffice.md](09-administration-backoffice.md#us-admin-01--gérer-des-rôles-admin-à-permissions-fines--implémentée-2026-08-29) —
+  les permissions fines sont stockées et assignables, mais aucun endpoint (nouveau ou existant) ne les
+  consulte encore pour autoriser une action ; tout reste gated par le rôle grossier `admin`.
+- US-ADMIN-06, 07, 08 (gestion clients, gestion experts au quotidien, support & litiges) — reste à faire.
 
 ## Phase 4 — Vertical métier "Décoration d'intérieur" (Should have, conditionné)
 Ce persona n'est **plus entièrement nouveau** : la Phase 0 a tranché pour un rôle professionnel unique +
@@ -114,7 +121,7 @@ Peut être livré en continu après la Phase 3, sans bloquer le reste :
 Phase 0  Fondations             (stockage fichiers, PSP, décisions modèle de données)
 Phase 1  Écart existant         AUTH-01/02/04/06, SEARCH-01/02, BOOK-01/04, DASH-01
 Phase 2  Boucler la transaction PAY-01 (reporté), REPORT-01/02 ✅, COMM-01 ✅
-Phase 3  Confiance & conformité PAY-02, COMM-02, DOC-01, ADMIN-01/06/07/08
+Phase 3  Confiance & conformité PAY-02, DOC-01, ADMIN-06/07/08  (COMM-02 ✅, ADMIN-01 ✅ faits)
 Phase 4  Vertical déco          SEARCH-03, BOOK-02 (BOOK-03 ✅ fait)  (conditionné, parallèle possible dès Phase 1)
 Phase 5  Pilotage & confort     DASH-02, ADMIN-02/03/04/05/09, COMM-03
 ```

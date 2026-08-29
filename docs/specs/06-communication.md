@@ -51,7 +51,7 @@ le client" (réservations côté expert).
 - **Pièces jointes** : n'importe quel type de fichier (pas seulement des images), affichées comme carte
   "📎 nom-du-fichier.ext" avec lien de téléchargement pré-signé — pas de prévisualisation.
 
-### US-COMM-02 — Centraliser les notifications d'activité
+### US-COMM-02 — Centraliser les notifications d'activité ✅ Implémentée (2026-08-29)
 **En tant qu'** utilisateur, **je veux** un centre de notifications groupé par période (Aujourd'hui, Hier)
 et filtrable par catégorie (Visites Techniques, Décoration & Design, Devis & Finances, Compte & Profil),
 avec une action directe sur chaque notification (ex. "Générer le rapport", "Répondre"), **afin de** ne rien
@@ -62,6 +62,22 @@ manquer sans devoir naviguer dans chaque module.
 - **Écart avec l'existant** : aucun équivalent — nécessite un système de notifications transverses
   (événements émis par les modules booking/report/payment/document).
 
+**Implémentation** : nouveau module `notifications/`, table `Notification` (catégorie, titre, corps, CTA,
+lu/non lu). Un port `NOTIFICATION_PUBLISHER` (défini dans `notifications/application/ports/`) est consommé
+par `bookings`, `reports` et `messaging` — même schéma d'import à sens unique que ces modules vers
+`BOOKING_REPOSITORY`. Événements couverts : nouvelle réservation et annulation (bookings), rapport soumis
+(reports), nouveau message (messaging). Page [Notifications.jsx](../../client/src/pages/Notifications.jsx) :
+regroupement par jour (Aujourd'hui/Hier/date), filtre par catégorie, badge de non-lues dans le header à
+côté du lien "Messages".
+
+**Simplifications assumées** :
+- **Polling plutôt que WebSocket**, même choix que la messagerie (voir US-COMM-01) — rafraîchissement
+  toutes les 15s, pas de brique transverse temps réel construite.
+- **"devis_finances" et "compte_profil" n'ont aucun producteur** pour l'instant : ces catégories existent
+  dans la taxonomie et le filtre, mais aucun événement ne les alimente (pas de module paiement/document).
+  Elles seront peuplées quand ces briques existeront.
+- **Pas d'icône de catégorie dédiée** — seul le libellé textuel de la catégorie est affiché.
+
 ### US-COMM-03 — Gérer mes préférences de notifications
 **En tant qu'** utilisateur, **je veux** choisir quels types d'événements me notifient et par quel canal
 (email, in-app), **afin de** ne pas être submergé par des alertes non pertinentes.
@@ -69,4 +85,4 @@ manquer sans devoir naviguer dans chaque module.
 - **Écart avec l'existant** : aucun équivalent.
 
 ## Priorisation suggérée
-Must have : US-COMM-01. Should have : US-COMM-02. Could have : US-COMM-03.
+Must have : US-COMM-01 ✅. Should have : US-COMM-02 ✅. Could have : US-COMM-03.
