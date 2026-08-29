@@ -31,6 +31,27 @@ beforeEach(() => {
 });
 
 describe("MyProjects — tableau de bord transverse des réservations", () => {
+  it("affiche 'Consultation déco' pour une réservation avec une décoratrice (US-BOOK-03)", async () => {
+    api.myBookings.mockResolvedValue(
+      bookingsPage([
+        {
+          id: "b1",
+          status: "confirmed",
+          slotStart: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          propertyAddress: "10 rue de Rivoli, Paris",
+          technicianFullName: "Sophie Laurent",
+          technicianEmail: "sophie@example.com",
+          technicianCategory: "decoration",
+        },
+      ]),
+    );
+
+    renderMyProjects();
+
+    expect(await screen.findByText("Consultation déco")).toBeInTheDocument();
+    expect(screen.queryByText("Contre-visite technique")).not.toBeInTheDocument();
+  });
+
   it("affiche une carte projet en cours avec le bandeau d'alerte et les CTA", async () => {
     api.myBookings.mockResolvedValue(
       bookingsPage([
@@ -87,7 +108,7 @@ describe("MyProjects — tableau de bord transverse des réservations", () => {
     expect(screen.getByText("Annulée")).toBeInTheDocument();
     expect(screen.queryByText(/^\d+ projets? en cours$/)).not.toBeInTheDocument();
     expect(
-      screen.getByText("Aucun projet en cours. Lancez une recherche pour réserver votre première contre-visite."),
+      screen.getByText("Aucun projet en cours. Lancez une recherche pour réserver votre première prestation."),
     ).toBeInTheDocument();
   });
 

@@ -79,10 +79,12 @@ function SimilarProfilesSection({ technicianId }) {
 // qu'un point d'entrée depuis le profil.
 function BookingPanel({ technician }) {
   const slotsCount = technician.availableSlots.length;
+  const isDeco = technician.category === "decoration";
+  const ctaLabel = isDeco ? "Réserver une consultation" : "Prendre rendez-vous";
 
   return (
     <div className="rounded-card border border-line bg-white p-4.5 shadow-card sm:sticky sm:top-6">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Prendre rendez-vous</h2>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">{ctaLabel}</h2>
 
       <p className="mb-4 text-sm text-ink/70">
         {slotsCount > 0
@@ -92,10 +94,10 @@ function BookingPanel({ technician }) {
 
       {slotsCount > 0 ? (
         <Link to={`/technicians/${technician.id}/book`}>
-          <Button>Prendre rendez-vous</Button>
+          <Button>{ctaLabel}</Button>
         </Link>
       ) : (
-        <Button disabled>Prendre rendez-vous</Button>
+        <Button disabled>{ctaLabel}</Button>
       )}
     </div>
   );

@@ -6,27 +6,30 @@ import Loading from "../components/Loading";
 import ErrorMessage from "../components/ErrorMessage";
 import AddressAutocomplete from "../components/AddressAutocomplete";
 import AddressMap from "../components/AddressMap";
-import { formatSlotRange } from "../lib/format";
+import { formatSlotRange, parseCommaList } from "../lib/format";
 import { FRENCH_PHONE_PATTERN, FRENCH_PHONE_TITLE, isValidFrenchPhone } from "../lib/validation";
 import { useTechnician } from "../hooks/useTechnicians";
 import { useCreateBooking } from "../hooks/useBookings";
 import { useTouched } from "../hooks/useTouched";
-
-const STEPS = [
-  { n: 1, label: "Détails du bien" },
-  { n: 2, label: "Créneau" },
-  { n: 3, label: "Confirmation" },
-];
 
 const PROPERTY_TYPES = [
   { value: "apartment", label: "Appartement" },
   { value: "house", label: "Maison" },
 ];
 
-function Stepper({ current }) {
+function stepsFor(isDeco) {
+  return [
+    { n: 1, label: isDeco ? "Détails du projet" : "Détails du bien" },
+    { n: 2, label: "Créneau" },
+    { n: 3, label: "Confirmation" },
+  ];
+}
+
+function Stepper({ current, isDeco }) {
+  const steps = stepsFor(isDeco);
   return (
     <ol className="mb-6 flex items-center gap-2">
-      {STEPS.map((step, i) => (
+      {steps.map((step, i) => (
         <li key={step.n} className="flex flex-1 items-center gap-2">
           <span
             className={`flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-semibold ${
@@ -38,7 +41,7 @@ function Stepper({ current }) {
           <span className={`hidden text-xs font-medium sm:block ${step.n === current ? "text-ink" : "text-muted"}`}>
             {step.label}
           </span>
-          {i < STEPS.length - 1 && <span className="h-px flex-1 bg-line" />}
+          {i < steps.length - 1 && <span className="h-px flex-1 bg-line" />}
         </li>
       ))}
     </ol>
@@ -62,18 +65,18 @@ function groupSlotsByDay(slots) {
   return groups;
 }
 
-function RecapPanel({ technician, propertyType, surface, addressLabel, selectedSlot }) {
+function RecapPanel({ technician, isDeco, propertyType, surface, addressLabel, selectedSlot }) {
   return (
     <div className="rounded-card border border-line bg-white p-4.5 shadow-card sm:sticky sm:top-6">
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Récapitulatif</h2>
 
       <div className="mb-3 flex flex-col gap-1 text-sm">
-        <span className="text-xs font-medium text-muted">Expert</span>
+        <span className="text-xs font-medium text-muted">{isDeco ? "Décoratrice" : "Expert"}</span>
         <span className="text-ink">{technician.fullName}</span>
       </div>
 
       <div className="mb-3 flex flex-col gap-1 text-sm">
-        <span className="text-xs font-medium text-muted">Votre bien</span>
+        <span className="text-xs font-medium text-muted">{isDeco ? "Votre projet" : "Votre bien"}</span>
         {addressLabel ? (
           <>
             <span className="text-ink">{addressLabel}</span>
@@ -111,12 +114,18 @@ export default function BookingTunnel() {
   const [surface, setSurface] = useState("");
   const [addressLabel, setAddressLabel] = useState("");
   const [addressCoords, setAddressCoords] = useState(null);
+  const [roomsConcerned, setRoomsConcerned] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [buyerPhone, setBuyerPhone] = useState("");
 
   if (technicianQuery.isLoading) return <Loading />;
   if (technicianQuery.isError) return <ErrorMessage error={technicianQuery.error} />;
   const technician = technicianQuery.data;
+  // US-BOOK-03 : même tunnel, étape 1 adaptée pour une consultation déco (pièces
+  // concernées + description) plutôt que de dupliquer tout le tunnel (étapes 2/3
+  // identiques dans les deux cas : créneau, récap, confirmation).
+  const isDeco = technician.category === "decoration";
 
   const slotGroups = groupSlotsByDay(technician.availableSlots);
   const selectedSlot = technician.availableSlots.find((s) => s.id === selectedSlotId) ?? null;
@@ -132,6 +141,8 @@ export default function BookingTunnel() {
         property_address: addressLabel,
         property_type: propertyType,
         surface_m2: surface === "" ? undefined : Number(surface),
+        rooms_concerned: isDeco && roomsConcerned.trim() !== "" ? parseCommaList(roomsConcerned) : undefined,
+        project_description: isDeco && projectDescription.trim() !== "" ? projectDescription.trim() : undefined,
       });
       navigate(`/bookings/${booking.id}/confirmation`, { state: { booking } });
     } catch {
@@ -145,13 +156,15 @@ export default function BookingTunnel() {
         ← Retour au profil
       </Link>
 
-      <Stepper current={step} />
+      <Stepper current={step} isDeco={isDeco} />
 
       <div className="grid gap-4 sm:grid-cols-[1fr_280px] sm:items-start">
         <div className="rounded-card border border-line bg-white p-4.5 shadow-card">
           {step === 1 && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-base font-semibold">Parlez-nous de votre bien</h1>
+              <h1 className="text-base font-semibold">
+                {isDeco ? "Parlez-nous de votre projet déco" : "Parlez-nous de votre bien"}
+              </h1>
 
               <div className="grid grid-cols-2 gap-3">
                 {PROPERTY_TYPES.map((t) => (
@@ -186,6 +199,23 @@ export default function BookingTunnel() {
                 }}
               />
               {addressCoords && <AddressMap lat={addressCoords.lat} lon={addressCoords.lon} />}
+
+              {isDeco && (
+                <>
+                  <Field
+                    label="Pièces concernées (séparées par une virgule)"
+                    placeholder="Salon, Cuisine"
+                    value={roomsConcerned}
+                    onChange={(e) => setRoomsConcerned(e.target.value)}
+                  />
+                  <Field
+                    as="textarea"
+                    label="Décrivez votre projet (style souhaité, budget, contraintes…)"
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                  />
+                </>
+              )}
 
               <Button disabled={!canProceedStep1} onClick={() => setStep(2)}>
                 Continuer
@@ -252,8 +282,18 @@ export default function BookingTunnel() {
                   <span className="font-medium">Bien :</span> {addressLabel} (
                   {PROPERTY_TYPES.find((t) => t.value === propertyType)?.label}, {surface} m²)
                 </p>
+                {isDeco && roomsConcerned.trim() !== "" && (
+                  <p>
+                    <span className="font-medium">Pièces concernées :</span> {roomsConcerned}
+                  </p>
+                )}
+                {isDeco && projectDescription.trim() !== "" && (
+                  <p>
+                    <span className="font-medium">Projet :</span> {projectDescription}
+                  </p>
+                )}
                 <p>
-                  <span className="font-medium">Expert :</span> {technician.fullName}
+                  <span className="font-medium">{isDeco ? "Décoratrice" : "Expert"} :</span> {technician.fullName}
                 </p>
                 <p>
                   <span className="font-medium">Date :</span>{" "}
@@ -280,6 +320,7 @@ export default function BookingTunnel() {
 
         <RecapPanel
           technician={technician}
+          isDeco={isDeco}
           propertyType={propertyType}
           surface={surface}
           addressLabel={addressLabel}

@@ -424,7 +424,6 @@ function AvailabilitiesTab() {
   );
 }
 
-const PROPERTY_TYPE_LABELS = { apartment: "Appartement", house: "Maison" };
 const MONTH_TREND_SIZE = 6;
 const DASHBOARD_PREVIEW_SIZE = 5;
 const NEXT_DAYS_WINDOW = 7;
@@ -485,6 +484,9 @@ function DashboardTab() {
 
   const firstName = meQuery.data.fullName?.split(" ")[0] ?? "";
   const hourlyRate = profileQuery.data?.hourlyRate ?? null;
+  // Toutes les réservations d'un technicien portent le même type de prestation que lui
+  // (US-BOOK-03) : pas besoin de le dériver réservation par réservation.
+  const serviceLabel = profileQuery.data?.category === "decoration" ? "Consultation déco" : "Contre-visite technique";
   const bookings = flattenPages(bookingsQuery.data); // triées par date croissante, toutes confirmées
 
   const now = Date.now();
@@ -536,7 +538,7 @@ function DashboardTab() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-ink">{b.buyerFullName}</p>
                 <p className="truncate text-xs text-muted">
-                  {PROPERTY_TYPE_LABELS[b.propertyType] ?? "Contre-visite technique"} · {b.propertyAddress}
+                  {serviceLabel} · {b.propertyAddress}
                 </p>
               </div>
               <Badge variant="ok">RDV confirmé</Badge>
@@ -557,7 +559,7 @@ function DashboardTab() {
           {upcoming.slice(0, DASHBOARD_PREVIEW_SIZE).map((b) => (
             <div key={b.id} className="flex items-center justify-between py-2 text-sm">
               <span className="text-ink">{formatDateTime(b.slotStart)}</span>
-              <span className="text-xs text-muted">Contre-visite technique</span>
+              <span className="text-xs text-muted">{serviceLabel}</span>
             </div>
           ))}
           {upcoming.length === 0 && <p className="py-1 text-xs text-muted">Aucun rendez-vous à venir.</p>}

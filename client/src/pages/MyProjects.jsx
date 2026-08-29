@@ -7,12 +7,14 @@ import { initials, formatDateTime } from "../lib/format";
 import { flattenPages } from "../lib/pagination";
 import { useMyBookings } from "../hooks/useBookings";
 
-// Un seul type de projet existe pour l'instant côté produit (la contre-visite
-// technique) : les devis de travaux et les consultations déco (US-BOOK-02/03)
-// sont "Should have" et pas encore construits. Le concept de "projet" transverse
-// dégénère donc, pour cette tranche, à un simple enrichissement d'affichage
-// au-dessus des réservations existantes — pas de nouvelle entité serveur.
-const PROJECT_TYPE_LABEL = "Contre-visite technique";
+// Deux types de projet existent pour l'instant côté produit (contre-visite technique,
+// consultation déco) ; le devis de travaux (US-BOOK-02) reste "Should have" et n'est
+// pas construit. Le concept de "projet" transverse dégénère donc, pour cette tranche,
+// à un simple enrichissement d'affichage au-dessus des réservations existantes — pas
+// de nouvelle entité serveur, le type est dérivé de la catégorie du technicien.
+function projectTypeLabel(booking) {
+  return booking.technicianCategory === "decoration" ? "Consultation déco" : "Contre-visite technique";
+}
 const HISTORY_PREVIEW_SIZE = 3;
 
 function isPast(booking) {
@@ -42,7 +44,7 @@ function OngoingProjectCard({ booking }) {
     <div className="flex flex-col gap-3 rounded-card border border-line bg-white p-4.5 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted">{PROJECT_TYPE_LABEL}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">{projectTypeLabel(booking)}</p>
           <div className="mt-1 flex items-center gap-2">
             <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-line/40 text-xs font-semibold">
               {initials(booking.technicianFullName)}
@@ -118,7 +120,7 @@ export default function MyProjects() {
           ))}
           {ongoing.length === 0 && (
             <p className="rounded-card border border-line bg-white p-4.5 text-sm text-muted shadow-card">
-              Aucun projet en cours. Lancez une recherche pour réserver votre première contre-visite.
+              Aucun projet en cours. Lancez une recherche pour réserver votre première prestation.
             </p>
           )}
         </div>
