@@ -72,10 +72,7 @@ describe("MyProjects — tableau de bord transverse des réservations", () => {
     expect(screen.getByText("1 projet en cours")).toBeInTheDocument();
     expect(screen.getByText("RDV confirmé")).toBeInTheDocument();
     expect(screen.getByText("Voir les détails")).toBeInTheDocument();
-    expect(screen.getByText("Contacter l'expert").closest("a")).toHaveAttribute(
-      "href",
-      "mailto:jean@example.com",
-    );
+    expect(screen.getByText("Contacter l'expert").closest("a")).toHaveAttribute("href", "/messages/b1");
   });
 
   it("classe les réservations passées et annulées dans l'historique plutôt qu'en cours", async () => {

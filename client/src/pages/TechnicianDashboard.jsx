@@ -538,6 +538,9 @@ function DashboardTab() {
                 </p>
               </div>
               <div className="flex flex-none items-center gap-2">
+                <Link to={`/messages/${b.id}`} className="text-xs font-medium text-ink underline">
+                  Message
+                </Link>
                 {!isDeco && (
                   <Link
                     to={`/technician/bookings/${b.id}/report`}
@@ -609,15 +612,20 @@ function BookingsTab() {
           <p className="text-xs text-ink/70">📍 {b.propertyAddress}</p>
           <div className="h-px bg-line" />
           <p className="text-xs text-ink/70">{b.buyerPhone}</p>
-          {!isDeco && (
-            <Link
-              to={`/technician/bookings/${b.id}/report`}
-              state={{ booking: b }}
-              className="text-xs font-medium text-ink underline"
-            >
-              Rédiger le rapport
+          <div className="flex gap-3">
+            <Link to={`/messages/${b.id}`} className="text-xs font-medium text-ink underline">
+              Contacter le client
             </Link>
-          )}
+            {!isDeco && (
+              <Link
+                to={`/technician/bookings/${b.id}/report`}
+                state={{ booking: b }}
+                className="text-xs font-medium text-ink underline"
+              >
+                Rédiger le rapport
+              </Link>
+            )}
+          </div>
         </div>
       ))}
       {bookings.length === 0 && <p className="text-sm text-muted">Aucune réservation à venir.</p>}

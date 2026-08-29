@@ -67,9 +67,9 @@ function OngoingProjectCard({ booking }) {
         <Link to={`/bookings/${booking.id}/confirmation`} className="flex-1">
           <Button variant="ghost">Voir les détails</Button>
         </Link>
-        <a href={`mailto:${booking.technicianEmail}`} className="flex-1">
+        <Link to={`/messages/${booking.id}`} className="flex-1">
           <Button variant="ghost">Contacter l'expert</Button>
-        </a>
+        </Link>
       </div>
       {booking.technicianCategory !== "decoration" && (
         <Link to={`/bookings/${booking.id}/report`} className="text-center text-xs font-medium text-ink underline">

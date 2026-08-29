@@ -15,6 +15,7 @@ import TechnicianReportEditor from "./pages/TechnicianReportEditor";
 import BookingReport from "./pages/BookingReport";
 import BuyerBookings from "./pages/BuyerBookings";
 import MyProjects from "./pages/MyProjects";
+import Messages from "./pages/Messages";
 import Admin from "./pages/Admin";
 
 export default function App() {
@@ -35,6 +36,8 @@ export default function App() {
       <Route path="/bookings/:bookingId/report" element={<BookingReport />} />
       <Route path="/projects" element={<MyProjects />} />
       <Route path="/bookings" element={<BuyerBookings />} />
+      <Route path="/messages" element={<Messages />} />
+      <Route path="/messages/:bookingId" element={<Messages />} />
       <Route path="/technician/bookings/:bookingId/report" element={<TechnicianReportEditor />} />
       <Route path="/technician/*" element={<TechnicianDashboard />} />
       <Route path="/admin" element={<Admin />} />

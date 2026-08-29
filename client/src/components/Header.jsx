@@ -24,6 +24,9 @@ export default function Header() {
       <div className="flex items-center gap-3">
         {meQuery.isLoading ? null : user ? (
           <>
+            <Link to="/messages" className="text-sm font-medium text-ink hover:underline">
+              Messages
+            </Link>
             <Link to="/profile" className="flex items-center gap-2">
               <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-line/40 text-xs font-semibold text-ink">
                 {initials(user.fullName)}

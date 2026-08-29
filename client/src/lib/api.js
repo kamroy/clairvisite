@@ -135,6 +135,16 @@ export const api = {
   removeReportPhoto: (bookingId, photoId) =>
     request(`/bookings/${bookingId}/report/photos/${photoId}`, { method: "DELETE" }),
 
+  myConversations: (params) => request(`/conversations?${toQueryString(params)}`),
+  conversationMessages: (bookingId) => request(`/conversations/${bookingId}/messages`),
+  sendMessage: (bookingId, data) =>
+    request(`/conversations/${bookingId}/messages`, { method: "POST", body: JSON.stringify(data) }),
+  requestMessageAttachmentUploadUrl: (bookingId, fileName, contentType) =>
+    request(`/conversations/${bookingId}/attachments/upload-url`, {
+      method: "POST",
+      body: JSON.stringify({ file_name: fileName, content_type: contentType }),
+    }),
+
   regions: () => request("/regions"),
 
   adminTechnicians: (params) => request(`/admin/technicians?${toQueryString(params)}`),
