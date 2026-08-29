@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/persistence/prisma/prisma.service';
-import { AuthProvider, User } from '../domain/user.entity';
+import { AuthProvider, Role, User } from '../domain/user.entity';
 import {
   CreateUserData,
   SetEmailVerificationTokenData,
@@ -23,6 +23,7 @@ function toDomain(row: any): User {
     row.emailVerifiedAt,
     row.emailVerificationTokenExpiresAt,
     row.passwordResetTokenExpiresAt,
+    row.adminRoleId,
   );
 }
 
@@ -104,5 +105,15 @@ export class PrismaUserRepository implements UserRepositoryPort {
       where: { id: userId },
       data: { passwordHash, passwordResetTokenHash: null, passwordResetTokenExpiresAt: null },
     });
+  }
+
+  async findAllByRole(role: Role): Promise<User[]> {
+    const rows = await this.prisma.user.findMany({ where: { role }, orderBy: { fullName: 'asc' } });
+    return rows.map(toDomain);
+  }
+
+  async setAdminRoleId(userId: string, adminRoleId: string | null): Promise<User> {
+    const row = await this.prisma.user.update({ where: { id: userId }, data: { adminRoleId } });
+    return toDomain(row);
   }
 }

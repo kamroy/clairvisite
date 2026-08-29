@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { User } from '../../src/modules/users/domain/user.entity';
+import { Role, User } from '../../src/modules/users/domain/user.entity';
 import {
   CreateUserData,
   SetEmailVerificationTokenData,
@@ -48,6 +48,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       data.emailVerifiedAt ?? null,
       null,
       null,
+      null,
     );
     this.users.set(user.id, user);
     return user;
@@ -69,6 +70,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       existing.emailVerifiedAt,
       existing.emailVerificationTokenExpiresAt,
       existing.passwordResetTokenExpiresAt,
+      existing.adminRoleId,
     );
     this.users.set(id, updated);
     return updated;
@@ -93,6 +95,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
         existing.emailVerifiedAt,
         data.expiresAt,
         existing.passwordResetTokenExpiresAt,
+        existing.adminRoleId,
       ),
     );
   }
@@ -121,6 +124,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       new Date(),
       null,
       existing.passwordResetTokenExpiresAt,
+      existing.adminRoleId,
     );
     this.users.set(userId, updated);
     return updated;
@@ -145,6 +149,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
         existing.emailVerifiedAt,
         existing.emailVerificationTokenExpiresAt,
         data.expiresAt,
+        existing.adminRoleId,
       ),
     );
   }
@@ -175,8 +180,35 @@ export class InMemoryUserRepository implements UserRepositoryPort {
         existing.emailVerifiedAt,
         existing.emailVerificationTokenExpiresAt,
         null,
+        existing.adminRoleId,
       ),
     );
+  }
+
+  async findAllByRole(role: Role): Promise<User[]> {
+    return [...this.users.values()].filter((u) => u.role === role);
+  }
+
+  async setAdminRoleId(userId: string, adminRoleId: string | null): Promise<User> {
+    const existing = this.users.get(userId);
+    if (!existing) throw new Error(`InMemoryUserRepository: user ${userId} not found`);
+    const updated = new User(
+      existing.id,
+      existing.email,
+      existing.fullName,
+      existing.role,
+      existing.authProvider,
+      existing.passwordHash,
+      existing.oidcSubject,
+      existing.avatarUrl,
+      existing.phone,
+      existing.emailVerifiedAt,
+      existing.emailVerificationTokenExpiresAt,
+      existing.passwordResetTokenExpiresAt,
+      adminRoleId,
+    );
+    this.users.set(userId, updated);
+    return updated;
   }
 
   seed(user: User): User {

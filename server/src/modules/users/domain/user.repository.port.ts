@@ -47,4 +47,9 @@ export interface UserRepositoryPort {
   setPasswordResetToken(userId: string, data: SetPasswordResetTokenData): Promise<void>;
   findByPasswordResetTokenHash(tokenHash: string): Promise<User | null>;
   resetPassword(userId: string, passwordHash: string): Promise<void>;
+
+  // Consommé par le module admin-roles (US-ADMIN-01) — la notion de rôle RBAC
+  // vit dans ce module-là, mais elle s'applique à un champ de l'agrégat User.
+  findAllByRole(role: Role): Promise<User[]>;
+  setAdminRoleId(userId: string, adminRoleId: string | null): Promise<User>;
 }

@@ -15,5 +15,6 @@ export class User {
     public readonly emailVerifiedAt: Date | null = null,
     public readonly emailVerificationTokenExpiresAt: Date | null = null,
     public readonly passwordResetTokenExpiresAt: Date | null = null,
+    public readonly adminRoleId: string | null = null,
   ) {}
 }
