@@ -160,6 +160,10 @@ model Booking {
   propertyAddress String        @map("property_address")
   propertyType    PropertyType? @map("property_type")
   surfaceM2       Int?          @map("surface_m2")
+  // Renseignés uniquement pour une consultation déco (US-BOOK-03) — le technicien
+  // concerné a `category: decoration` ; laissés vides pour une contre-visite technique.
+  roomsConcerned     String[] @map("rooms_concerned")
+  projectDescription String?  @map("project_description")
   status          BookingStatus @default(confirmed)
   createdAt       DateTime      @default(now()) @map("created_at")
 

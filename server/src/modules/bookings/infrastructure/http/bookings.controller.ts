@@ -30,6 +30,8 @@ export class BookingsController {
       propertyAddress: dto.property_address,
       propertyType: dto.property_type,
       surfaceM2: dto.surface_m2,
+      roomsConcerned: dto.rooms_concerned,
+      projectDescription: dto.project_description,
     });
   }
 

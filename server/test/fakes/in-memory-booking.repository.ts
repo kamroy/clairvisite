@@ -38,6 +38,7 @@ export class InMemoryBookingRepository implements BookingRepositoryPort {
       technicianFullName: technicianUser?.fullName ?? '',
       technicianEmail: technicianUser?.email ?? '',
       technicianPhone: technician.phone,
+      technicianCategory: technician.category,
       buyerEmail: buyer?.email ?? '',
       buyerFullName: buyer?.fullName ?? '',
       slotStart: slot.startDatetime,
@@ -101,6 +102,8 @@ export class InMemoryBookingRepository implements BookingRepositoryPort {
         existing.createdAt,
         existing.propertyType,
         existing.surfaceM2,
+        existing.roomsConcerned,
+        existing.projectDescription,
       ),
     );
     if (status === 'confirmed') this.availabilities.tryReserve(existing.availabilityId);
@@ -130,6 +133,8 @@ export class InMemoryBookingRepository implements BookingRepositoryPort {
       new Date(),
       data.propertyType ?? null,
       data.surfaceM2 ?? null,
+      data.roomsConcerned ?? [],
+      data.projectDescription ?? null,
     );
     this.bookings.set(booking.id, booking);
     return this.hydrate(booking);

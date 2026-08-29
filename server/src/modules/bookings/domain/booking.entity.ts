@@ -14,5 +14,7 @@ export class Booking {
     // existants (tests, fakes) — collectés par l'étape 1 du tunnel de réservation.
     public readonly propertyType: PropertyType | null = null,
     public readonly surfaceM2: number | null = null,
+    public readonly roomsConcerned: string[] = [],
+    public readonly projectDescription: string | null = null,
   ) {}
 }

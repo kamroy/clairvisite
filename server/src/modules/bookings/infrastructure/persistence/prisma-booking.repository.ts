@@ -21,6 +21,8 @@ function toDomain(row: any): Booking {
     row.createdAt,
     row.propertyType,
     row.surfaceM2,
+    row.roomsConcerned,
+    row.projectDescription,
   );
 }
 
@@ -30,6 +32,7 @@ function toDetails(row: any): BookingWithDetails {
     technicianFullName: row.availability.technician.user.fullName,
     technicianEmail: row.availability.technician.user.email,
     technicianPhone: row.availability.technician.phone,
+    technicianCategory: row.availability.technician.category,
     buyerEmail: row.buyer.email,
     buyerFullName: row.buyer.fullName,
     slotStart: row.availability.startDatetime,
@@ -123,6 +126,8 @@ export class PrismaBookingRepository implements BookingRepositoryPort {
           propertyAddress: data.propertyAddress,
           propertyType: data.propertyType,
           surfaceM2: data.surfaceM2,
+          roomsConcerned: data.roomsConcerned ?? [],
+          projectDescription: data.projectDescription,
         },
         include: detailsInclude,
       });

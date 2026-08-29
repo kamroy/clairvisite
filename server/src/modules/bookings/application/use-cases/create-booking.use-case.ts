@@ -15,6 +15,8 @@ export interface CreateBookingInput {
   propertyAddress: string;
   propertyType?: PropertyType;
   surfaceM2?: number;
+  roomsConcerned?: string[];
+  projectDescription?: string;
 }
 
 @Injectable()
@@ -38,6 +40,8 @@ export class CreateBookingUseCase {
         propertyAddress: input.propertyAddress,
         propertyType: input.propertyType,
         surfaceM2: input.surfaceM2,
+        roomsConcerned: input.roomsConcerned,
+        projectDescription: input.projectDescription,
       });
     } catch (err) {
       if (err instanceof SlotAlreadyBookedError || err instanceof TechnicianNotAvailableError) {

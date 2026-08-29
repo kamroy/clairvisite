@@ -3,6 +3,12 @@ import { Booking, BookingStatus, PropertyType } from './booking.entity';
 
 export const BOOKING_REPOSITORY = Symbol('BOOKING_REPOSITORY');
 
+// Dupliqué depuis technicians/domain/technician.entity.ts plutôt qu'importé : les
+// domaines des modules restent indépendants les uns des autres (aucun module ne
+// dépend du domain/ d'un autre) — seule l'infrastructure (adapters Prisma) a le droit
+// de tout connaître via ses jointures.
+export type TechnicianCategory = 'technique' | 'decoration' | 'architecture';
+
 export interface CreateBookingData {
   availabilityId: string;
   buyerId: string;
@@ -10,6 +16,8 @@ export interface CreateBookingData {
   propertyAddress: string;
   propertyType?: PropertyType;
   surfaceM2?: number;
+  roomsConcerned?: string[];
+  projectDescription?: string;
 }
 
 // Vue enrichie utilisée pour l'email de confirmation et les écrans de détail —
@@ -19,6 +27,10 @@ export interface BookingWithDetails extends Booking {
   technicianFullName: string;
   technicianEmail: string;
   technicianPhone: string;
+  // Dérivée par jointure (pas persistée sur Booking) : permet d'afficher "Contre-visite
+  // technique" vs "Consultation déco" sans dupliquer une donnée qui vit déjà sur
+  // Technician et pourrait devenir incohérente si elle était copiée à la création.
+  technicianCategory: TechnicianCategory;
   buyerEmail: string;
   buyerFullName: string;
   slotStart: Date;

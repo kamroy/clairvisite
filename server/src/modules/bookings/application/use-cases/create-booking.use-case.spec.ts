@@ -48,6 +48,22 @@ describe('CreateBookingUseCase', () => {
     expect(repo.createIfSlotAvailable).toHaveBeenCalledWith(input);
   });
 
+  it('transmet les champs propres à une consultation déco (US-BOOK-03)', async () => {
+    const decoInput = {
+      ...input,
+      roomsConcerned: ['Salon', 'Cuisine'],
+      projectDescription: 'Rafraîchir le salon et la cuisine, style scandinave.',
+    };
+    const booking = { id: 'booking-1', ...decoInput, status: 'confirmed' } as any;
+    const repo = makeRepo({ createIfSlotAvailable: jest.fn().mockResolvedValue(booking) });
+    const useCase = new CreateBookingUseCase(repo, makeNotifier());
+
+    const result = await useCase.execute(decoInput);
+
+    expect(result).toBe(booking);
+    expect(repo.createIfSlotAvailable).toHaveBeenCalledWith(decoInput);
+  });
+
   it("traduit SlotAlreadyBookedError en 409 (règle métier anti double-réservation)", async () => {
     const repo = makeRepo({
       createIfSlotAvailable: jest.fn().mockRejectedValue(new SlotAlreadyBookedError()),

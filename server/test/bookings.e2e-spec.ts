@@ -152,6 +152,41 @@ describe('Bookings (e2e)', () => {
       .expect(403);
   });
 
+  it('un acheteur peut réserver une consultation déco avec pièces concernées et description (US-BOOK-03)', async () => {
+    technicians.seed(
+      new Technician('deco-1', 'tech-user-1', '0600000003', ['déco'], ['idf'], null, 'approved', null, 'decoration'),
+    );
+    const decoSlot = await availabilities.create({
+      technicianId: 'deco-1',
+      startDatetime: new Date('2026-09-05T10:00:00Z'),
+      endDatetime: new Date('2026-09-05T11:00:00Z'),
+    });
+
+    const created = await request(app.getHttpServer())
+      .post('/api/bookings')
+      .set('Cookie', `session=${tokenFor('buyer-1', 'acheteur')}`)
+      .send({
+        availability_id: decoSlot.id,
+        buyer_phone: '0611111111',
+        property_address: '1 rue de Paris',
+        rooms_concerned: ['Salon', 'Cuisine'],
+        project_description: 'Rafraîchir le salon et la cuisine, style scandinave.',
+      })
+      .expect(201);
+
+    expect(created.body).toMatchObject({
+      roomsConcerned: ['Salon', 'Cuisine'],
+      projectDescription: 'Rafraîchir le salon et la cuisine, style scandinave.',
+      technicianCategory: 'decoration',
+    });
+
+    const mine = await request(app.getHttpServer())
+      .get('/api/bookings/me')
+      .set('Cookie', `session=${tokenFor('buyer-1', 'acheteur')}`)
+      .expect(200);
+    expect(mine.body.items[0]).toMatchObject({ roomsConcerned: ['Salon', 'Cuisine'], technicianCategory: 'decoration' });
+  });
+
   it("l'acheteur peut annuler sa réservation, ce qui libère le créneau", async () => {
     const created = await request(app.getHttpServer())
       .post('/api/bookings')
