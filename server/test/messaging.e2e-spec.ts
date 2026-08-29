@@ -107,7 +107,8 @@ describe('Messaging (e2e)', () => {
 
     expect(res.body.messages).toHaveLength(2);
     expect(res.body.messages[0].content).toBe('Bonjour, à quelle heure arrivez-vous ?');
-    expect(res.body.booking).toMatchObject({ buyerFullName: 'Buyer One', technicianFullName: 'Tech One' });
+    // Vu depuis buyer-1 : l'interlocuteur affiché doit être le technicien, pas soi-même.
+    expect(res.body.booking).toMatchObject({ interlocutorName: 'Tech One' });
   });
 
   it("un message vide sans pièce jointe est refusé (400)", async () => {

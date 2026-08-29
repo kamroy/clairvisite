@@ -36,8 +36,9 @@ export class GetConversationMessagesUseCase {
       conversationId: conversation.id,
       messages: enriched,
       booking: {
-        buyerFullName: booking.buyerFullName,
-        technicianFullName: booking.technicianFullName,
+        // Calculé côté serveur plutôt que de renvoyer les deux noms et laisser le
+        // client deviner lequel est "l'autre partie" : plus sûr et plus simple.
+        interlocutorName: booking.buyerId === userId ? booking.technicianFullName : booking.buyerFullName,
         propertyAddress: booking.propertyAddress,
         slotStart: booking.slotStart,
       },
